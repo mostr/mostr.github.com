@@ -3,6 +3,9 @@ layout: default
 ---
 
 <div class="blog-index">
+  <div style="padding-left:20px; padding-right:20px">
+    {% include custom/asides/about.html %}
+  </div>
   {% assign index = true %}
   {% for post in paginator.posts %}
   {% assign content = post.content %}
@@ -20,10 +23,3 @@ layout: default
     {% endif %}
   </div>
 </div>
-<aside class="sidebar">
-  {% if site.blog_index_asides.size %}
-    {% include_array blog_index_asides %}
-  {% else %}
-    {% include_array default_asides %}
-  {% endif %}
-</aside>
