@@ -65,6 +65,9 @@ body {
       padding-right: $pad-wide;
     }
   }
+  nav div {
+    text-align: right;
+  }
   div.pagination {
     @extend .group;
     margin-left: $pad-min;
