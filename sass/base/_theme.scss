@@ -1,5 +1,9 @@
-$noise-bg: image-url('noise.png') top left !default;
+$white: #ffffff;
+
+//$noise-bg: image-url('noise.png') top left !default;
+$noise-bg: $white !default;
 $img-border: inline-image('dotted-border.png');
+
 
 // Main Link Colors
 $link-color: lighten(#165b94, 3) !default;
@@ -8,9 +12,9 @@ $link-color-visited: adjust-color($link-color, $hue: 80, $lightness: -4) !defaul
 $link-color-active: adjust-color($link-color-hover, $lightness: -15) !default;
 
 // Main Section Colors
-$main-bg: #f8f8f8 !default;
-$page-bg: #252525 !default;
-$article-border: #eeeeee !default;
+$main-bg: $white !default;
+$page-bg: $white !default;
+$article-border: $white !default;
 
 $header-bg: #333 !default;
 $header-border: lighten($header-bg, 15) !default;
@@ -72,7 +76,7 @@ a {
 }
 
 html {
-  background: $page-bg image-url('line-tile.png') top left;
+//  background: $page-bg image-url('line-tile.png') top left;
 }
 body {
   > div {
