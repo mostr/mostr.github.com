@@ -3,7 +3,7 @@ layout: post
 title: "Accidential false-positive when verifying calls with Mockito"
 date: 2012-09-09 09:31
 comments: true
-categories: 
+categories: java mockito unit_test
 ---
 
 Testing!
