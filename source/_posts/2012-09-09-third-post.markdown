@@ -17,3 +17,21 @@ Nullam adipiscing neque ac lacus commodo vitae imperdiet dui sollicitudin. Ut ac
 Proin ut hendrerit arcu. Maecenas ullamcorper tristique magna vel mattis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam tincidunt euismod viverra. In sit amet neque turpis. Suspendisse ac sapien mi, id blandit purus. Ut tortor turpis, rutrum ac tempor at, accumsan sit amet erat. Etiam ultricies eleifend dolor, eget tempus justo tristique vitae. In hac habitasse platea dictumst. Aliquam eu enim neque.
 
 Morbi massa lorem, viverra non dictum at, malesuada vel nibh. Nam fermentum lobortis varius. Sed a nulla lacus, quis posuere risus. Nunc id urna libero, quis rutrum mi. In gravida felis urna. Praesent nec dolor ac urna tempor fermentum. Curabitur rutrum arcu et lorem volutpat viverra.
+
+
+``` java test.java
+
+import com.github.mostr.*
+
+public class MyClass extends Test implements Runnable {
+  
+  public static void main(String[] args) {
+    int a = 10;
+    if(a == 1) {
+      return;
+    }
+    System.out.println(args)
+  }
+
+}
+```
