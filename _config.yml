@@ -2,10 +2,11 @@
 #      Main Configs       #
 # ----------------------- #
 
+no_posts: true
 url: http://yoursite.com
-title: My Octopress Blog
-subtitle: A blogging framework for hackers.
-author: Your Name
+title: "Hi, I'm Michal I write code"
+subtitle: 
+author: Michal Ostruszka
 simple_search: http://google.com/search
 description:
 
