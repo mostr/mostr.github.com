@@ -2,7 +2,6 @@
 #      Main Configs       #
 # ----------------------- #
 
-no_posts: true
 url: http://mostr.github.com
 title: "Hi, I'm Michal I write code"
 subtitle: 
