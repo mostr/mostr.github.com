@@ -1,0 +1,21 @@
+---
+layout: post
+title: Speaking multiple programming languages
+date: 2012-10-12 10:52
+comments: true
+categories: languages general
+---
+
+Those times when there was only one programming language in project and it was used for everything are gone. Times, when being familar with only one language was enough are also gone. These days you are expected to know something more besides your "main" language, to be familiar with different concepts and ways of doing things etc. 
+Almost every few days there is new language showing up (especially in JVM field) so there is wide range of languages to learn. Also it seems to me that the pragmatic "right tool for the right job" way of thinking is getting more and more popular, which is good I think.
+
+
+Let's take real example, case I had in the past. Few years ago when I was "only java" guy I had to write a tiny web scraping tool. It was natural for me those days to do it in java - why not?. You can imagine this huge amount of (not well designed) code, giant amounts of xml-parsing-related objects flying around, do you? I'm not saying there is no way to write that effectively in java. I'm sure it is, but personally if I had to do that again now, I'd use either ruby possibly with excellent Nokogiri gem, or groovy with its XmlSlurper. Few lines of code and I could get all I needed with less effort, flexibility and highly readable syntax. And what is also important, with the job done.  
+Another example: you just need to write web application with "heavy" backend. Sure, you can do that all in java with jsf, spring mvc, struts, wicket or whatever on the front-end and spring/java ee on the backend side. But these days, you can combine different, sometimes more suitable technologies/languages on the front-end with completely different stack on the backend. Imagine your app having ruby (rails, padrino, or even sinatra) on the front-end and with java ee components on the backend. Tempting, huh?
+
+
+But there is also another advantage of going multi-language. The one that I see as really important from point of view of personal growth in software development area. Just playing with other languages makes you familiar with different ways of solving the same problems, different design approaches and coding styles. It's not about lines of code, speed and readability. It's more about completely different language constructions and paradigms you can learn and keep as inspiration in your toolbox for later use. For example, being "only java" you have no chance to experience features java doesn't have (yet) like closures, blocks, dynamic language features, functional programming aspects etc. You may not realize the real power of the fact that e.g. in scala, javascript (coffescript or typescript) you can pass function ("operation" to be invoked) as an argument to another function or even return it. Have you ever had to anonymously implement an interface and pass this implementation to the method call in order to mimic such feature in java? You may not know that e.g. in ruby you can easily generate classes and methods on the fly, and that there is this great metaprogramming magic and you create DSLs that are pure beauty. Think of how you can improve your tools with such DSLs!
+Being open for other languages and getting to know them (even if you don't plan to switch completely) allows you to see how different approaches to similar concepts they have, like java inheritance vs prototypal inheritance in javascript, mixins and singletons in ruby, or meet their concepts not available in java like implicit conversions that looks like dynamic typing in scala and so on.
+
+
+Even if you are not as experienced in those "side" languages as in your "main" one, I'm sure you can really benefit from that experience. You will start looking at the problem in hand from different point of views, having different possible approaches to solving it. Been there, done that although I can't say I'm an expert in those languages - I've simply learnt some of their concepts. Maybe not all of that will be possible to code in java (or any other language that is your "main" one) but it's huge bonus to have more possible ideas for one problem. And hey, you have one more tool/toy to use if you happen to face with the job that fits it. Isn't that cool?
