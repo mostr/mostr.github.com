@@ -1,0 +1,30 @@
+---
+layout: post
+title: My notes from first BYOP meetup in Lodz
+date: 2012-11-08 11:56
+comments: true
+categories: meetup agile byop community
+---
+
+First of all what the heck is BYOP? This acronym resolves to **Bring Your Own Problem** and is polish local agile initiative of folks from Code Sprinters. This is set of recurring meetups (they are free of charge) for agile enthusiasts (or those who just want to learn something about it) in different polish cities. Attendees are welcome to bring their own problems they have in organizations, ask questions, exchange ideas or just listen for others agile practitioners. You can read more at [byop.pl](http://byop.pl) (site in polish only).
+
+It was very first BYOP meetup organized in Lodz and I was positively surprised with number of attendees. There were 19 of us from different IT companies based in Lodz. Most of the attendees were actively discussing over the whole meeting, but I could spot one or two folks who seemed to be really bored. The whole meeting finished after more than 2,5 hours of hot discussion, what was also a positive surprise for me. I was expecting that we would run out of topics, ideas and people willing to discuss quickly. 
+
+So it all started from discussion about team appraisals, bonuses, motivation etc in terms of both development teams as a whole and individual developers and delivering business values. Several real-life examples of appraisal processes and their strenghts and weaknesses in context of whole teams were provided as well as ideas for improvements of current processes. The result of discussion was that it was better to conduct such appraisal processes on the whole team level instead of single developers then tweak the process in exceptional situations and keep away from HR excel forms, points and strict grades. It also turned out that money were not the biggest motivation and introducing transparency within organization might make motivation-related things even better. There was an example of IT company from Bulgaria, where every aspect of their business, from salaries through contracts negotiations and prices to company profits was completely transparent. 
+
+Next discussion topic I noticed was about communication and soft skills in developers world. As one said 
+> Developers should learn how brain works before they learn how SVN works 
+
+It is really important to know how to communicate with others and to encourage so called **osmotic communication** within the team, where information is widely accessible and just flows in the air in the team's room. So called **information radiators** are one of the most popular things supporting such model in agile development world. As a part of constant improvement of teams and their work, giving and receiving valuable feedback to others is necessary. It is really hard to do that and some people are simply not brave enough to do that. But as real life examples show after several feedback rounds (occuring every few weeks/months) it gets better and teams can greatly benefit from those feedback sessions. Team members can even stop worrying about giving/receiving immediate feedback. I advise you to read those blog posts of Pawel Brodzinski about feedback: [Feedback Culture](http://blog.brodzinski.com/2012/08/feedback-culture.html), [Instant Feedback](http://blog.brodzinski.com/2012/04/instant-feedback-culture.html) and [On Feedback](http://blog.brodzinski.com/2012/07/on-feedback.html).
+
+The next big discussion topic was about role of Project Managers in agile teams. Not all PMs are ok with giving more freedom (and loosing own control) to their teams and they still try to micro-manage to keep this illusion of control. Only small numbers of them can fully understand that their new role during and after agile transformation is to serve the team, to support team's desicions and to push organization in order to give the team what they need. Good Project Manager should be as close to his team as possible, should experience what's happening there. In Lean Manufacturing there is something called **Gemba Walk** which is exactly that. Question: **Does your PM sit together with his team, in the same room?** If not, he is doing it wrong. There was a cite from Roy Osherove who defined three phases of team evolution, where Project Manager (or some kind of leader in general) was required only in first two phases, to manage, show directions and keep things running. His role in last, third phase is just as mentioned above - to help the team do its job, not manage. You can find the full article about it [here](http://5whys.com/blog/the-3-maturity-stages-of-a-software-team-and-how-scrum-fails.html). For some teams where Project Manager can't play well with new model of agile communication and collaboration, teams are forced to build up alternative communication channels bypassing Project Manager and taking over his role (at least partially).
+
+Those are the biggest topics I noticed during the discussion. Besides that there were also following things discussed:
+
+* There is no point in teams comparison, teams are different and interactions between team members make it unique
+* How to build team: let people create it or just designate people to teams? Which teams perform better?
+* Agility in government or other "formality-heavy" institutions
+* Agile as just only another buzzword
+* Agile transformation is not possible without agile-addicted freaks who can push this process forward
+
+To sum up, I found this meetup worth every single minute I spent there. It is always good to hear and learn from others, and to be able to exchange ideas and have background for applying them. The good news is that next BYOP in Lodz is gonna be on **January&nbsp;16,&nbsp;2013**. I really invite you to come and bring your own problem! I hope we can start building kind of active agile community in Lodz. Why not?
