@@ -1,0 +1,106 @@
+---
+layout: post
+title: Quick glance at JAX-RS 2.0 Client API 
+date: 2013-01-25 08:44
+comments: true
+categories: java javaee jax-rs rest
+---
+
+JAX-RS 2.0 is going to be included in Java EE 7, so I thought I'd play with it a bit to get familiar with what's new there. One thing that is going to be standarized in specification (JSR-399) is Client API. 
+Up until now to consume REST or semi-REST (just JSON or XML) web services you could use some non-standarized API of Jersey, CXF, RESTEasy etc or (heaven forbid) roll your own stuff. In this post I'd like to show you how easy it is to consume RESTful services using this standarized API.
+
+First of all, be aware that this API is still in non-final version (currently in Public Review). There are also some inconsistencies between what specification says and what is currently implemented in e.g. reference implementation from Jersey and RESTEasy.
+
+So to begin with I created maven project with only those two dependencies:
+
+``` xml
+
+<!-- well, reference implementation -->
+<dependency>
+	<groupId>org.glassfish.jersey.bundles</groupId>
+	<artifactId>jax-rs-ri</artifactId>
+	<version>2.0-m10</version>
+</dependency>
+<!-- jackson dependency as we are going to consume JSON responses -->
+<dependency>
+	<groupId>org.codehaus.jackson</groupId>
+	<artifactId>jackson-jaxrs</artifactId>
+	<version>1.9.9</version>
+</dependency>        
+        
+```
+
+Let's play with Twitter search for this example. As we don't want to parse response JSON by hand, I'm gonna create the following data structure to let Jackson transform JSON response to. It is very simple class with all-stuff-public for ease of use.
+
+``` java 
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+class TwitterSearchResults {
+
+	public List<Tweet> results;
+
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	public static class Tweet {
+
+		@JsonProperty("from_user")
+		public String user;
+
+		public String text;
+
+	}
+
+}
+
+```
+
+So how does JAX-RS 2.0 Client API call look like? Actually it's pretty simple, just fire the code below and it will give you `TwitterSearchResults` object back.
+
+``` java
+
+Client client = ClientFactory.newClient();
+client.configuration().register(JacksonJsonProvider.class);
+TwitterSearchResults response = client
+		.target("http://search.twitter.com/search.json")
+		.queryParam("q", "jaxrs")
+		.request("application/json")
+		.get(TwitterSearchResults.class);
+client.close();            
+
+```
+
+This is the simplest form you can use, but there is more stuff to make it even better.
+It is important to keep in mind that creating `Client` instance is heavyweight and expensive process, so it is advised to keep configured instance of `Client` around.
+As you can see `Client` can be configured before use by registering `Providers`, `Filters` and `Features`. Here I'm just registering one provider, `JacksonJsonProvider` but there may be any number of providers registered. In that case, when client is going to be heavily configured via registering providers and setting some properties it may be better to use `Feature` instead. So what this `Feature` is?
+
+``` java
+
+class JsonParsingFeature implements Feature {
+
+	@Override
+	public boolean configure(Configurable configurable) {
+		configurable.register(JacksonJsonProvider.class);
+		return true;
+	}
+}
+    
+```
+
+This is an implementation of `Feature` interface that gets `Configurable` and can play with it to register/unregister providers, set properties etc. In current version of specification it is said that `Feature` must implement `enable` and `disable` methods but there is no such thing in both RI and RESTEasy beta implementations. Moreover specification says there should be `enableFeature` method to include given feature, but in RI it turns out there is just `register` method instead and in current RESTEasy implementation there is no way to register feature.
+So with this tiny feature implemented we can replace registration of `JacksonJsonProvider` with registration of `JsonParsingFeature`. Not a big deal, but imagine heavily customized client - you can split configuration into features and enable/disable them with just one line.
+
+`Client` interface is nice example of fluent interfaces where you can chain methods to get desired result. But it still may seem too low level for some of you, right? Can we encapsulate this client's operation and expose even simpler API? Sure we can, with little help of `Invocation`.
+
+``` java
+
+// hide all the low-level details from caller
+Invocation invocation = client
+		.target("http://search.twitter.com/search.json")
+		.queryParam("q", "jaxrs")
+		.request("application/json")
+		.buildGet();
+
+// simply use invocation
+TwitterSearchResults response = invocation.invoke(TwitterSearchResults.class);
+
+```
+So that's the basic usage of new JAX-RS 2.0 API. There is more things to cover like registering `Filters`, creating `WebTargets` - request templates (with `{param}` tokens) that can be replaced dynamically. Also `async()` can be used to make asynchronous request and get `Future` instance back for later evaluation. 

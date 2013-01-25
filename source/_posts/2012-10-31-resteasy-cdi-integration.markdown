@@ -3,7 +3,7 @@ layout: post
 title: RESTEasy resources are CDI-aware in JBoss AS by default
 date: 2012-10-31 13:29
 comments: true
-categories: java jee cdi jboss jax-rs
+categories: java javaee cdi jboss jax-rs
 ---
 
 JAX-RS and CDI have slightly different scopes so that by default there is no way to mix them and use CDI bean as JAX-RS resource, so `@Inject` and other CDI magic tools are not available. To get it working you normally need to annotate your class with `@RequestScoped` like below

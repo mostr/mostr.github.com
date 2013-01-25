@@ -3,7 +3,7 @@ layout: post
 title: Running Arquillian tests with Maven dependencies in IntelliJ Idea
 date: 2012-10-24 09:01
 comments: true
-categories: test arquillian intellij maven java
+categories: test arquillian intellij maven java javaee
 ---
 Arquillian is a big thing. For me it is a revolution in in-container testing. In real world scenarios it is quite common that your JEE components use some libraries, frameworks or other utility classes provided in thirdparty archives. When building project with maven you can make use of `pom.xml` descriptor and avoid giant amounts of boilerplate code (adding classes and packages of thirdparty libs by hand). I won't dive into details how you can set it up, but the idea is to use `MavenDependencyResolver` and configure it to read your `pom.xml`.
 
