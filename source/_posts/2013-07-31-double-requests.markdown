@@ -6,6 +6,8 @@ comments: true
 categories: javascript angularjs
 ---
 
+*Note: You can read the same post published on [Codebrag blog](http://blog.codebrag.com/post/57412530001/preventing-duplicated-requests-in-angularjs).*
+
 You know the case when you hit submit button quickly enough that it sends the form twice? Or when you hit submit button and it seems that nothing happens, so you click it once again and another request is being fired? Duplicated requests issue - you can experience it in both traditional web application as well as in modern so-called Single Page Applications. I'd like to show you how it can be handled in AngularJS and how we did it in [Codebrag](http://codebrag.com).
 
 AngularJS itself has no built-in stuff for that. You can fire as many HTTP requests as you want and it is up to you and your application's code to handle it the way that would prevent double form submission. So let's see what weapons we are armed with to win this battle.
@@ -26,51 +28,51 @@ What we need to do is to "intercept" `$http` service calls and decide if given r
 
 > Decoration of service, allows the decorator to intercept the service instance creation. The returned instance may be the original instance, or a new instance which delegates to the original instance.
 
-and that's exactly what we need. So this is how decorator is applied in [Codebrag](http://codebrag.com):
+and that's exactly what we need. So this is how decorator can be applied:
 
 ``` javascript decorator usage
-	angular.module('codebrag').config(function($provide) {
+	angular.module('app').config(function($provide) {
         $provide.decorator('$http', function($delegate, $q) {
-            return codebrag.uniqueRequestsAwareHttpService($delegate, $q);
+            return app.commons.uniqueRequestsAwareHttpService($delegate, $q);
         });
     })
 ```
 
 I'll show you the details of implementation soon. Next issue to solve is how to determine when requests are identical and if one is already in progress? In the simplest form HTTP requests in AngularJS are done as below:
-	
-``` javascript simple http call	
+
+``` javascript simple http call
 	var config = {method: 'POST', url: 'http://api.myapp.com/comment', data: {msg: 'foo bar'}};
 	$http(config);
 ```
-	
+
 All other methods like shortcut `get`, `post` as well as `$resource` use this form internally.
 It turns out we can freely add our own properties to this `config` object. They will help us identify requests. So we can for example modify the config above as follows:
 
-``` javascript modified config	
+``` javascript modified config
 	var config = {
-		method: 'POST', 
-		url: 'http://api.myapp.com/comment', 
-		data: {msg: 'foo bar'}, 
+		method: 'POST',
+		url: 'http://api.myapp.com/comment',
+		data: {msg: 'foo bar'},
 		unique: true,
 		requestId: create-comment'
 	};
 ```
-	
+
 This new config contains two new properties `unique` and `requestId`. The first one determines if for given types of requests we should check for duplicates or let all of them be sent (we probably can let all GET requests to go through without this check, and have e.g. POSTs checked). The second one, `requestId` is a property we'll match on when looking for duplicates. In this case it has constant value (create-comment) which means that only one POST request to `http://api.myapp.com/comment` should be pending at any time. This value can be dynamically calculated (e.g. using `data` for more fine-grained control).
 
 Ok, but how can we find out which requests are currently in progress? `$http` service has one neat property called `pendingRequests` which is array of `config` objects for request that were sent. So matching duplicated requests is just a matter of searching through `pendingRequests` for request with identical `requestId` as one in our request we are about to send. So here is first part of implementation:
 
 ``` javascript first implementation	of modified service
-	codebrag.uniqueRequestsAwareHttpService = function($http) {
-	
+	app.commons.uniqueRequestsAwareHttpService = function($http) {
+
 	    var uniqueRequestOptionName = "unique";
 	    var requestIdOptionName = 'requestId';
-	
+
 		// should we care about duplicates check
 	    function checkForDuplicates(requestConfig) {
 	        return !!requestConfig[uniqueRequestOptionName];
 	    }
-	
+
 		// find identical request in pending requests
 	    function checkIfDuplicated(requestConfig) {
 	        var duplicated = $http.pendingRequests.filter(function(pendingReqConfig) {
@@ -78,7 +80,7 @@ Ok, but how can we find out which requests are currently in progress? `$http` se
 	        });
 	        return duplicated.length > 0;
 	    }
-	
+
 	    var modifiedHttpService = function(requestConfig) {
 			// if we need to check for dups and pending found - return
 	        if(checkForDuplicates(requestConfig) && checkIfDuplicated(requestConfig)) {
@@ -87,7 +89,7 @@ Ok, but how can we find out which requests are currently in progress? `$http` se
 	        // otherwise pass requeust to original $http service
 	        return $http(requestConfig);
 	    };
-	    
+
 	    return modifiedHttpService;
 	};
 ```
@@ -95,12 +97,12 @@ Ok, but how can we find out which requests are currently in progress? `$http` se
 It works fine if you try it, but has one huge drawback. `$http` service calls return promises so you can attach to them using `then` function and wait for them to be either resolved or rejected. Our current implementation is not consistent in return types. In fact it returns nothing when duplicate is detected, but returns regular promise when request is passed to original `$http`. To fix it we need to construct deferred using `$q` service as below.
 
 ``` javascript returning promise
-	codebrag.uniqueRequestsAwareHttpService = function($http, $q) {
-	
+	app.commons.uniqueRequestsAwareHttpService = function($http, $q) {
+
 	    var DUPLICATED_REQUEST_STATUS_CODE = 499; // I just made it up - nothing special
 	    var EMPTY_BODY = '';
 	    var EMPTY_HEADERS = {};
-	
+
 		// previous stuff here
 
 	    function buildRejectedRequestPromise(requestConfig) {
@@ -112,7 +114,7 @@ It works fine if you try it, but has one huge drawback. `$http` service calls re
 	        dfd.reject(response);
 	        return dfd.promise;
 	    }
-	
+
 	    var modifiedHttpService = function(requestConfig) {
 	        if(checkForDuplicates(requestConfig) && checkIfDuplicated(requestConfig)) {
 	        	// return rejected promise with response consistent with those from $http calls
@@ -120,13 +122,13 @@ It works fine if you try it, but has one huge drawback. `$http` service calls re
 	        }
 	        return $http(requestConfig);
 	    };
-	    
+
 	    return modifiedHttpService;
-	};	
+	};
 ```
 
 Done, we have fully working implementation. Just one note, it works only for direct `$http` calls, if you try to fire `$http.get` or `$http.post` or even `$resource` it won't work, because those use shortcut calls defined directly on `$http`. Fix for that would be to define such functions on our modified version of `$http` service, but I'll leave it to you.
 
-And that's all. We have fully working decorator implementation that can prevent duplicated requests from sending. You can configure it separately for every `$http` request you define in your application. Just add `unique` and `requestId` parameters to request config. 
+And that's all. This is how we solved this in [Codebrag](http://codebrag.com) without violating DRY (at least I think so). We have fully working decorator implementation that can prevent duplicated requests from sending. It can be configure separately for every `$http` request group you define in your application. Just add `unique` and `requestId` parameters to request config.
 
 I'm sure there are other methods for doing this kind of stuff. If you know one, let me know about it in comments below.
