@@ -12,15 +12,15 @@ You know the case when you hit submit button quickly enough that it sends the fo
 
 AngularJS itself has no built-in stuff for that. You can fire as many HTTP requests as you want and it is up to you and your application's code to handle it the way that would prevent double form submission. So let's see what weapons we are armed with to win this battle.
 
-### Disable button after submit
+## Disable button after submit
 
 Suppose you want to prevent user to double-submit the same form. You can write pretty simple AngularJS directive to disable button when clicked. It will effectively block this button from being pressed again until e.g. response comes back. I personally don't really like this one, because you need to remember to put this directive on every form in you application. It looks like violating DRY a bit. So let's look for something better.
 
-### Asynchronous UI approach
+## Asynchronous UI approach
 
 This is not a solution to this particular problem per se but more an approach to building web applications. [Alex McCaw](http://blog.alexmaccaw.com/asynchronous-ui) has great post about it which I highly recommend reading. Basically the trick is not to wait for server's response if it is not absolutely required. Simply act as if action was performed succesfully and immediately do what should be done on success. So let's take our form submit example. When user clicks submit button you fire HTTP request as usual and close form (possibly doing something more too, like adding comment to list) without waiting for response from server. It effectively prevents user from resubmitting form as it disappears immediately after button click. Obviously there are some drawbacks too and there are also use-cases (like payments etc) where this approach isn't recommended, but in most cases it will work fine. For more details I really recommend reading [Alex's post](http://blog.alexmaccaw.com/asynchronous-ui).
 
-### AngularJS-based solution
+## AngularJS-based solution
 
 Ok but this approach above requires rethinking and possibly changing significant stuff in you application. What if you don't really want to do that? It turns out that solution for our initial problem can be quite easily implemented with tooling already available in AngularJS.
 

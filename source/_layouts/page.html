@@ -18,10 +18,10 @@ layout: default
         {% include post/date.html %}{% if updated %}{{ updated }}{% else %}{{ time }}{% endif %}
         {% if page.categories %}{% include post/categories.html %}{% endif %}
       </p>{% endif %}
-<!--       {% unless page.sharing == false %}
+      {% unless page.sharing == false %}
         {% include post/sharing.html %}
       {% endunless %}
- -->    </footer>
+    </footer>
   {% endunless %}
 </article>
 {% if site.disqus_short_name and page.comments == true %}
@@ -31,7 +31,7 @@ layout: default
   </section>
 {% endif %}
 </div>
-{% unless page.sidebar == false or site.sidebar == false %}
+{% unless page.sidebar == false %}
 <aside class="sidebar">
   {% if site.page_asides.size %}
     {% include_array page_asides %}

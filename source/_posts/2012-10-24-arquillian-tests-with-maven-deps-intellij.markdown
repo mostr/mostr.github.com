@@ -15,10 +15,10 @@ Arquillian is a big thing. For me it is a revolution in in-container testing. In
     // use in ShrinkWrap archive
 ```
 
-This code above works well when run in Eclipse or in command-line Maven, but surprisingly may fail when run from IntelliJ Idea. It complains that `pom.xml` file cannot be found and read. Some time ago I switched my IDE from Eclipse to IntelliJ Idea and I'm still brand new if it comes to its cofiguration tips and tricks. Quick ShrinkWrap debugging session and it turnes out that IntelliJ invokes tests from **project's dir** instead of **module's dir**. Fortunately I've found a switch for that in IDE. 
+This code above works well when run in Eclipse or in command-line Maven, but surprisingly may fail when run from IntelliJ Idea. It complains that `pom.xml` file cannot be found and read. Some time ago I switched my IDE from Eclipse to IntelliJ Idea and I'm still brand new if it comes to its cofiguration tips and tricks. Quick ShrinkWrap debugging session and it turnes out that IntelliJ invokes tests from **project's dir** instead of **module's dir**. Fortunately I've found a switch for that in IDE.
 
-### There I fixed it
+## There I fixed it
 
-Go to **Edit Configurations** (under **Run** menu), select **Defaults** branch and then **JUnit**. You can see that **Working directory** is set to project's directory. That's why `pom.xml` could not be found in this location. Fortunately it can be changed either to `MAVEN_REPOSITORY` or to `MODULE_DIR` and the latter is  exactly what you want. Changing that and saving it in defaults makes the issue above disappear. 
+Go to **Edit Configurations** (under **Run** menu), select **Defaults** branch and then **JUnit**. You can see that **Working directory** is set to project's directory. That's why `pom.xml` could not be found in this location. Fortunately it can be changed either to `MAVEN_REPOSITORY` or to `MODULE_DIR` and the latter is  exactly what you want. Changing that and saving it in defaults makes the issue above disappear.
 
 Now you can run your tests from IntelliJ even if you have maven dependencies to be included in your `@Deployment` archive.
