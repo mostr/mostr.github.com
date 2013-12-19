@@ -23,7 +23,7 @@ Sometimes you may want for example to process different responses in different w
         }
 
         return function(httpPromise) {
-            return httpPromise.then(success, error);
+            return httpPromise.then(successHandler, errorHandler);
         };
 
     });
@@ -61,7 +61,7 @@ And here it is. Custom `bypassErrorsInterceptor` property will be set for each r
         }
 
         return function (promise) {
-            return promise.then(success, error);
+            return promise.then(successHandler, errorHandler);
         };
 
     });
