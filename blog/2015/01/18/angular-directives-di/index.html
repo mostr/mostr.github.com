@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>You don't always need DI in AngularJS directives - Hi there, I'm Michal</title>
+  <title>You don't always need AngularJS DI in directives - Hi there, I'm Michal</title>
   <meta name="author" content="Michal Ostruszka">
 
   
@@ -79,7 +79,7 @@
     
   <header>
     
-      <h1 class="entry-title">You don't always need DI in AngularJS directives</h1>
+      <h1 class="entry-title">You don't always need AngularJS DI in directives</h1>
     
     
       <p class="meta">
@@ -337,7 +337,7 @@
 
 <p>It may look like unnecessary complexity introducing kind of level of indirection, but think of it: when you need to use this directive in any other project you just take it (with no deps) and the only thing to make it working is to provide it with something that quacks like <code>MessagesStore</code>. When you need several instances of such notifier - no worries, just provide each one with separate <code>MessagesStore</code> like object. Doesn&#8217;t matter whether the <code>MessageStore</code>-like thing is service, factory or just simple object created ad-hoc in controller, directive doesn&#8217;t care unless you obey API contract. Another benefit for me personally is that this form of directive (taking attribute defining messages source) is way more readable. It&#8217;s way more informative than cryptic <code>&lt;messages&gt;&lt;/messages&gt;</code> thing.</p>
 
-<p>And that&#8217;s all, that&#8217;s how I&#8217;d code that for now. There is nothing new, nothing complicated and definitely no magic (well, maybe except directive&#8217;s <code>=</code>, for some less experienced angularians). Key is that you don&#8217;t always need to couple stuff on framework level, even if it&#8217;s perfectly doable and easy. Think of long term project development, maintenance, about components reusability, your fellows developers, etc. I&#8217;m not saying this is silver bullet and will work in all your projects, and you should ban injecting any dependencies to directives - I&#8217;m far from that. Just think how would you like to use that directive if you were newcomer and what are potential tradeoffs of each solution (because you always have at least two, don&#8217;t you?).</p>
+<p>And that&#8217;s all, that&#8217;s how I&#8217;d code that for now. There is nothing new, nothing complicated and definitely no magic (well, maybe except directive&#8217;s <code>=</code>, for some less experienced angularians). Conceptually this is still dependency injection but key point here is that you don&#8217;t always need to couple stuff on framework level with its own DI, even if it&#8217;s perfectly doable and easy. Think of long term project development, maintenance, about components reusability, your fellows developers, etc. I&#8217;m not saying this is silver bullet and will work in all your projects, and you should ban injecting any dependencies to directives - I&#8217;m far from that. Just think how would you like to use that directive if you were newcomer and what are potential tradeoffs of each solution (because you always have at least two, don&#8217;t you?).</p>
 
 <p>Regarding <a href="http://c2.com/cgi/wiki?YouArentGonnaNeedIt">YAGNI</a> and not complicating stuff if not required for those who may doubt: initial discussion that triggered this post took place during <strong>migration of some Angular components</strong> from <a href="http://codebrag.com">Codebrag</a> to <a href="https://github.com/softwaremill/bootzooka">Bootzooka</a>, so as you can see thinking a bit about reusability isn&#8217;t that bad.</p>
 </div>

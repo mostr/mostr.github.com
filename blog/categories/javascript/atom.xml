@@ -4,7 +4,7 @@
   <title><![CDATA[Category: javascript | Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/blog/categories/javascript/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-01-19T11:19:21+01:00</updated>
+  <updated>2015-01-19T14:44:45+01:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[You don't always need DI in AngularJS directives]]></title>
+    <title type="html"><![CDATA[You don't always need AngularJS DI in directives]]></title>
     <link href="http://mostr.github.com/blog/2015/01/18/angular-directives-di/"/>
     <updated>2015-01-18T22:43:00+01:00</updated>
     <id>http://mostr.github.com/blog/2015/01/18/angular-directives-di</id>
@@ -187,7 +187,7 @@ app.controller('AppCtrl', function($scope, MessagesStore) {</p>
 
 <p>It may look like unnecessary complexity introducing kind of level of indirection, but think of it: when you need to use this directive in any other project you just take it (with no deps) and the only thing to make it working is to provide it with something that quacks like <code>MessagesStore</code>. When you need several instances of such notifier - no worries, just provide each one with separate <code>MessagesStore</code> like object. Doesn't matter whether the <code>MessageStore</code>-like thing is service, factory or just simple object created ad-hoc in controller, directive doesn't care unless you obey API contract. Another benefit for me personally is that this form of directive (taking attribute defining messages source) is way more readable. It's way more informative than cryptic <code>&lt;messages&gt;&lt;/messages&gt;</code> thing.</p>
 
-<p>And that's all, that's how I'd code that for now. There is nothing new, nothing complicated and definitely no magic (well, maybe except directive's <code>=</code>, for some less experienced angularians). Key is that you don't always need to couple stuff on framework level, even if it's perfectly doable and easy. Think of long term project development, maintenance, about components reusability, your fellows developers, etc. I'm not saying this is silver bullet and will work in all your projects, and you should ban injecting any dependencies to directives - I'm far from that. Just think how would you like to use that directive if you were newcomer and what are potential tradeoffs of each solution (because you always have at least two, don't you?).</p>
+<p>And that's all, that's how I'd code that for now. There is nothing new, nothing complicated and definitely no magic (well, maybe except directive's <code>=</code>, for some less experienced angularians). Conceptually this is still dependency injection but key point here is that you don't always need to couple stuff on framework level with its own DI, even if it's perfectly doable and easy. Think of long term project development, maintenance, about components reusability, your fellows developers, etc. I'm not saying this is silver bullet and will work in all your projects, and you should ban injecting any dependencies to directives - I'm far from that. Just think how would you like to use that directive if you were newcomer and what are potential tradeoffs of each solution (because you always have at least two, don't you?).</p>
 
 <p>Regarding <a href="http://c2.com/cgi/wiki?YouArentGonnaNeedIt">YAGNI</a> and not complicating stuff if not required for those who may doubt: initial discussion that triggered this post took place during <strong>migration of some Angular components</strong> from <a href="http://codebrag.com">Codebrag</a> to <a href="https://github.com/softwaremill/bootzooka">Bootzooka</a>, so as you can see thinking a bit about reusability isn't that bad.</p>
 ]]></content>
