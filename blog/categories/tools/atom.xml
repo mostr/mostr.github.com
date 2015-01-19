@@ -4,7 +4,7 @@
   <title><![CDATA[Category: tools | Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/blog/categories/tools/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-01-19T11:18:05+01:00</updated>
+  <updated>2015-01-19T11:19:21+01:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -12,17 +12,6 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
-  
-  <entry>
-    <title type="html"><![CDATA[Web framework is not my application - how I write webapps]]></title>
-    <link href="http://mostr.github.com/blog/2014/11/08/use-cases/"/>
-    <updated>2014-11-08T16:54:00+01:00</updated>
-    <id>http://mostr.github.com/blog/2014/11/08/use-cases</id>
-    <content type="html"><![CDATA[<p>If you write web applications you usually use some kind of web framework, so that means you write either controllers (in terms of full-blown MVC frameworks) or so called route handlers (as people working with Sinatra-like style frameworks call them). They are points of integration where your application meets HTTP and the entire web. As any other piece of code we write, these parts too can be written in different flavors. I'd like to show you my approach to writing web applications and explain why I really don't care whether my application is gonna have HTTP integration or any other (e.g. console-based).</p>
-
-<p>During the last years there were different approaches to writing web apps: put everything in controllers, "skinny controllers, fat models", etc. As the former is clearly wrong it's still not uncommon to see people creating huge monster-controllers, full of spaghetti code and doing all heavy-lifting directly in controllers themselves. Putting entire the logic in models has its own drawbacks (rails community knows both pros and cons of this approach) and I'm not gonna discuss it here.</p>
-]]></content>
-  </entry>
   
   <entry>
     <title type="html"><![CDATA[Scalaval - dead simple Scala validation micro library]]></title>
@@ -250,6 +239,26 @@ end
 <p><strong>Guard with RSpec for JRuby note:</strong></p>
 
 <p>There is an implementation of Guard-rspec for JRuby <a href="https://github.com/jkutner/guard-jruby-rspec">here</a>, but currently available version has an quite annoying issue - when you change spec file it "magically" doubles specs number run. <a href="https://github.com/jkutner/guard-jruby-rspec/pull/22">My pull-request</a> with fix for that was already merged, so you may want to use latest version from Github until it is released.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Cookbook dependencies in Chef Solo with Librarian]]></title>
+    <link href="http://mostr.github.com/blog/2013/02/20/librarian/"/>
+    <updated>2013-02-20T10:12:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2013/02/20/librarian</id>
+    <content type="html"><![CDATA[<p><em>Disclaimer: I'm just chef-solo newbie and those are my findings after few hours with chef</em></p>
+
+<p>When cooking something non-trivial with chef-solo your cookbooks (or community cookbooks you use) may depend on other cookbooks. For example to use <a href="https://github.com/edelight/chef-mongodb">this</a> <code>mongodb</code> cookbook you need <code>apt</code> and <code>yum</code> cookbooks too. So you need to be sure you have all the dependencies available in place so chef can reach them. It may be real PITA and you know that if you are e.g. java developer and had a chance to work without dependencies management tool and you had to figure out and download all the dependendent jars by hand. But fear not, fortunately "there is a gem for that" that helps you manage cookbooks' dependencies. It is called <a href="https://github.com/applicationsonline/librarian">Librarian</a> and is works like <a href="http://gembundler.com/">Bundler</a> for ruby projects, or like <a href="http://maven.apache.org/">Maven</a> (its dependencies management part) for java projects. It uses its own <code>Cheffile</code> to declare required dependencies. For example to use <code>mongodb</code> cookbook mentioned above you may write the following:</p>
+
+<p><code>ruby Cheffile
+site 'http://community.opscode.com/api/v1'
+cookbook 'mongodb', :git =&gt; https://github.com/edelight/chef-mongodb.git
+</code></p>
+
+<p>Now run <code>librarian-chef install</code> and it will download all the declared cookbooks together with their dependencies to your cookbooks location. In case of the <code>mongodb</code> cookbook it will download this <code>mongodb</code> cookbook itself and <code>apt</code> and <code>yum</code> cookbooks as well.</p>
+
+<p>I recommend you to take a look at <a href="https://github.com/applicationsonline/librarian">Librarian</a> if you haven't used it before as well as get familiar with this whole topic of automated provisioning (no matter what tool you will choose, it's worth spending some time to learn it). I enjoyed it all a lot.</p>
 ]]></content>
   </entry>
   
