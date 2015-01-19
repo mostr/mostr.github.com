@@ -1,0 +1,389 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Tricky verification of final methods with Mockito - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="So here it is, my first blog post. Anyway, let&#8217;s stop all those celebrations and let&#8217;s go straight to the topic. We developers test our &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2012/09/30/mockito-tricky-final-verification">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">Tricky verification of final methods with Mockito</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-30T21:02:00+02:00" pubdate data-updated="true">Sep 30<span>th</span>, 2012</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>So here it is, my first blog post. Anyway, let&#8217;s stop all those celebrations and let&#8217;s go straight to the topic.</p>
+
+<p>We developers test our code in order to deliver high quality software, right? If you code java, there is a chance you use Mockito as your framework of choice for providing your tests with test doubles objects. As stated in documentation, Mockito doesn&#8217;t work with <code>final</code> methods, which effectively means that you can neither stub nor verify those methods.
+But what actually happens when you attempt to verify final method call? Let&#8217;s say you didn&#8217;t notice this method was declared final.  It turns out that your tests can pass. Moreover, the method you try to verify doesn&#8217;t really have to be called in your code. I&#8217;ll show you the case similar to one we had recently when there was method in our codebase that was declared final and not being aware of that we were trying to mock it.</p>
+
+<p>Let&#8217;s say team is coding users registration feature as below:</p>
+
+<figure class='code'><figcaption><span>UserRegistrationService.java</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UserRegistrationService</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">UsersRepository</span> <span class="n">usersRepository</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="nf">UserRegistrationService</span><span class="o">(</span><span class="n">UsersRepository</span> <span class="n">usersRepository</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">this</span><span class="o">.</span><span class="na">usersRepository</span> <span class="o">=</span> <span class="n">usersRepository</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">registerUser</span><span class="o">(</span><span class="n">User</span> <span class="n">newUser</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">if</span><span class="o">(</span><span class="n">newUser</span><span class="o">.</span><span class="na">hasEmailDomainBanned</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">throw</span> <span class="k">new</span> <span class="nf">SpamProtectionException</span><span class="o">(</span><span class="s">&quot;Email address domain is blacklisted&quot;</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="c1">// missing call to usersRepository.add()</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">SpamProtectionException</span> <span class="kd">extends</span> <span class="n">RuntimeException</span><span class="o">{</span>
+</span><span class='line'>        <span class="kd">public</span> <span class="nf">SpamProtectionException</span><span class="o">(</span><span class="n">String</span> <span class="n">message</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="kd">super</span><span class="o">(</span><span class="n">message</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>UsersRepository</code> was defined by your teammate as follows and contains <strong>final</strong> method, because of&#8230; I don&#8217;t know what. Anyway:</p>
+
+<figure class='code'><figcaption><span>UsersRepository.java</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UsersRepository</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// beware: method declared final!</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">add</span><span class="o">(</span><span class="n">User</span> <span class="n">newUser</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;persistent storage call will be here&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p></p>
+
+<p>And here goes the first test (with JUnit and statically imported Mockito methods) to verify if registered user is passed to persist by calling <code>add</code> method on <code>usersRepository</code>. But if you take a look at <code>UserRegistrationService</code> you can spot that one, tiny detail (aka bug). There is no method on <code>usersRepository</code> called inside <code>registerUser</code>.</p>
+
+<figure class='code'><figcaption><span>UserRegistrationServiceTest.java (first test)</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UserRegistrationServiceTest</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">UsersRepository</span> <span class="n">usersRepository</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">UserRegistrationService</span> <span class="n">registrationService</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nd">@Before</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setUp</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">usersRepository</span> <span class="o">=</span> <span class="n">mock</span><span class="o">(</span><span class="n">UsersRepository</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">registrationService</span> <span class="o">=</span> <span class="k">new</span> <span class="n">UserRegistrationService</span><span class="o">(</span><span class="n">usersRepository</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nd">@Test</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">shouldStoreRegisteredUser</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">User</span> <span class="n">newUser</span> <span class="o">=</span> <span class="k">new</span> <span class="n">User</span><span class="o">(</span><span class="s">&quot;John Doe&quot;</span><span class="o">,</span> <span class="s">&quot;user@gmail.com&quot;</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">registrationService</span><span class="o">.</span><span class="na">registerUser</span><span class="o">(</span><span class="n">newUser</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">verify</span><span class="o">(</span><span class="n">usersRepository</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="n">newUser</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Can you guess what test result shows? I&#8217;d say that this test should result with error yelling at me that it can&#8217;t spy final methods (as <code>add</code> one) or at least the verification should fail as there is no call to <code>add</code> method in the code. But it turns out that the bar is green. Also this test seems to invoke real object&#8217;s method as it prints out</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>persistent storage call will be here
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To be true, this test would fail if only there were any prerequisities not configured for this test that would result with exception or so (e.g. database call, resource bundle access etc). But as long as this target method can execute with no exception this test passes.</p>
+
+<p>Ok, werid a bit, but because this test passes, everithing looks good so let&#8217;s add another one. Now let&#8217;s test that it rejects registration of user whose email domain was blacklisted. In order to do this we invoke registration of user with invalid email address and we expect both: exception to be thrown and that no method was called on <code>usersRepository</code>. This test can be coded as below:</p>
+
+<figure class='code'><figcaption><span>UserRegistrationServiceTest.java (second test)</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Test</span><span class="o">(</span><span class="n">expected</span> <span class="o">=</span> <span class="n">UserRegistrationService</span><span class="o">.</span><span class="na">SpamProtectionException</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">shouldNotRegisterUserIfEmailIsBlacklisted</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">User</span> <span class="n">newUser</span> <span class="o">=</span> <span class="k">new</span> <span class="n">User</span><span class="o">(</span><span class="s">&quot;John Doe&quot;</span><span class="o">,</span> <span class="s">&quot;user@spam.com&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">registrationService</span><span class="o">.</span><span class="na">registerUser</span><span class="o">(</span><span class="n">newUser</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">verifyZeroInteractions</span><span class="o">(</span><span class="n">usersRepository</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It turns out that when you run both tests together, the first one still succeeds as before, but the last one fails with the following message:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>org.mockito.exceptions.misusing.UnfinishedVerificationException:
+</span><span class='line'>Missing method call for verify(mock) here:
+</span><span class='line'>-&gt; at pl.michalostruszka.mockito.UserRegistrationServiceTest.shouldStoreRegisteredUser(UserRegistrationServiceTest.java:31)
+</span><span class='line'>
+</span><span class='line'>Example of correct verification:
+</span><span class='line'>    verify(mock).doSomething()
+</span><span class='line'>
+</span><span class='line'>Also, this error might show up because you verify either of: final/private/equals()/hashCode() methods.
+</span><span class='line'>Those methods *cannot* be stubbed/verified.
+</span><span class='line'>
+</span><span class='line'>    at pl.michalostruszka.mockito.UserRegistrationServiceTest.setUp(UserRegistrationServiceTest.java:23)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Whoaaa! It says that there was unfinished verification and when you click the line with arrow <code>-&gt;</code> in your IDE it highlights exacly this line with verification from first test. It is really helpful as it gives you valuable hint what may be wrong (and it was not the case in Mockito versions eariler than 1.8 as far as I know). But there is one more issue: you get this error only when you play with this specific mock - in this case this is <code>verifyZeroInteractions</code> call. This is because Mockito doesn&#8217;t seem to verify its mocks state on test case end, but only at their next usage. You know, you should not rely on order in which test methods are executed, so it may happen that even with those two tests we still get green bar for both (if executed in different order).</p>
+
+<p>Test cases shown above are set up without specific JUnit runner and with <code>Mockito.mock()</code> method call to define mock.
+I&#8217;ve been playing with that a bit more and found that if you run this test class with <code>MockitoJUnitRunner</code> both test would succeed with no warning message that there was something wrong. You don&#8217;t even have to change this mock initialization from <code>mock()</code> method call to <code>@Mock</code> annotation.</p>
+
+<p>To sum up, if you use method that is final and try to verify this method&#8217;s call you may end up with passing test even if the code you exercise is not correct. It may happen no matter how many times this method was exercised and how many times you expected it to be called. This also happens especially when verification is the last action invoked on this mock object during given test run. Mockito will do its best to let you know that there is unfinished verification giving you clear hint about what&#8217;s wrong, but only when you run your tests without Mockito-specific runner. If you don&#8217;t, you should be aware that when you get real implementation being executed on previously mocked object, you may have missed the fact that its method was declared final.</p>
+
+<p>I&#8217;d say that coding even such simple feature test-first would probably save some time on investigating what was wrong. It is because your freshly written test would pass with no implementation in place, which is clearly suspucious. Doing it test-after, you just fine-tune test cases to pass according to existing implementation that may not be correct.</p>
+
+<p>There was <a href="http://code.google.com/p/mockito/issues/detail?id=54&amp;can=1&amp;q=final%20method">Mockito issue</a> raised in 2009 which led to implementation of those &#8220;unfinished verification&#8221; hints on failure, but the case described above seems to be present still in current mockito version which is 1.9.0.</p>
+
+<p>If you&#8217;d like to play with this code, I put maven project for this post <a href="https://github.com/mostr/mockito-tricky-verification">here on github</a> with few commits containing respective project phases with each change described.</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2012/09/30/mockito-tricky-final-verification/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2012/09/30/mockito-tricky-final-verification/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2012/09/30/mockito-tricky-final-verification/';
+        var disqus_url = 'http://mostr.github.com/blog/2012/09/30/mockito-tricky-final-verification/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

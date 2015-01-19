@@ -1,0 +1,433 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>You don't always need DI in AngularJS directives - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="This post is a follow up to the discussion about Angular directives we had recently in SoftwareMill with Marcin Kubala. Marcin was working on &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2015/01/18/angular-directives-di">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">You don't always need DI in AngularJS directives</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-01-18T22:43:00+01:00" pubdate data-updated="true">Jan 18<span>th</span>, 2015</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This post is a follow up to the discussion about Angular directives we had recently in <a href="http://softwaremill.com">SoftwareMill</a> with <a href="https://twitter.com/marcin_kubala">Marcin Kubala</a>. Marcin was working on refreshing our Scala with AngularJS scaffolding project called <a href="https://github.com/softwaremill/bootzooka">Bootzooka</a>.</p>
+
+<h2>Use case</h2>
+
+<p>We want to display some notifications to user (think of it as a Twitter Bootstrap&#8217;s &#8220;alert&#8221; component). This is to let user know for example that changes he made were either successfuly saved or not, or display any other information user would be able to dismiss once read. There is usually one such place in application that displays that kind of things.</p>
+
+<h2>To the code</h2>
+
+<p>So let&#8217;s say we have Angular component to keep and manage (add new, dismiss) messages to display. It&#8217;s gonna be <code>factory</code> so that it nicely encapsulates data and behavior we need and it&#8217;s easily injectable to almost any other component. Here is slightly simplified version, just for this post&#8217;s purposes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">app</span><span class="p">.</span><span class="nx">factory</span><span class="p">(</span><span class="s1">&#39;MessagesStore&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">messages</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">function</span> <span class="nx">dismiss</span><span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nx">messages</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">msg</span><span class="p">);</span>
+</span><span class='line'>    <span class="nx">messages</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">function</span> <span class="nx">add</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span> <span class="nx">text</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">messages</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span> <span class="nx">type</span><span class="o">:</span> <span class="nx">type</span><span class="p">,</span> <span class="nx">text</span><span class="o">:</span> <span class="nx">text</span> <span class="p">});</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">messages</span><span class="o">:</span> <span class="nx">messages</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">dismiss</span><span class="o">:</span> <span class="nx">dismiss</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">add</span><span class="o">:</span> <span class="nx">add</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Once we have place to store and access messages to be displayed, let&#8217;s make it displayable with directive. At first we&#8217;ll define simple template for directive to use:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;script </span><span class="na">id=</span><span class="s">&quot;messages.html&quot;</span> <span class="na">type=</span><span class="s">&quot;text/ng-template&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="o">&lt;</span><span class="nx">ul</span> <span class="kr">class</span><span class="o">=</span><span class="s2">&quot;messages&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>    <span class="o">&lt;</span><span class="nx">li</span> <span class="nx">ng</span><span class="o">-</span><span class="nx">repeat</span><span class="o">=</span><span class="s2">&quot;m in msgSource.messages&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>      <span class="p">{{</span> <span class="nx">m</span><span class="p">.</span><span class="nx">type</span> <span class="p">}}</span><span class="o">:</span> <span class="p">{{</span> <span class="nx">m</span><span class="p">.</span><span class="nx">text</span> <span class="p">}}</span> <span class="o">&lt;</span><span class="nx">button</span> <span class="nx">ng</span><span class="o">-</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;msgSource.dismiss(m)&quot;</span><span class="o">&gt;</span><span class="nx">dismiss</span><span class="o">&lt;</span><span class="err">/button&gt;</span>
+</span><span class='line'>    <span class="o">&lt;</span><span class="err">/li&gt;</span>
+</span><span class='line'>  <span class="o">&lt;</span><span class="err">/ul&gt;</span>
+</span><span class='line'><span class="nt">&lt;/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>No rocket science here, just simple <code>ng-repeat</code> to display all stored messages. Also each displayed message can be dismissed by user by clicking <strong>dismiss</strong> button next to it. Now, let&#8217;s move on to the actual directive:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">app</span><span class="p">.</span><span class="nx">directive</span><span class="p">(</span><span class="s1">&#39;messages&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">MessagesStore</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">restrict</span><span class="o">:</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">templateUrl</span><span class="o">:</span> <span class="s1">&#39;messages.html&#39;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">link</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">scope</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">scope</span><span class="p">.</span><span class="nx">msgSource</span> <span class="o">=</span> <span class="nx">MessagesStore</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you can see to let directive know about messages to display we simply inject <code>MessagesStore</code> and make use of it (in this case simply assigning it to <code>msgSource</code> used in template). Obviously if there were other stuff to be done (like auto-dismissing messages after some time etc.) there would be more code in <code>link</code> function, but let&#8217;s not complicate things.</p>
+
+<p>And now&#8230; it&#8217;s done, you may say. It works like a charm, displays any messages that are already stored in <code>MessagesStore</code> and lets you dismiss every single one. Sure, but I personally see one drawback here: this directive is tightly coupled to <code>MessagesStore</code> service. You cannot use it without having this service around and I don&#8217;t feel this is the best solution. I like to have my directives being independent from other components as much as possible. So let&#8217;s see how can we deal with it and make it a bit better.</p>
+
+<h2>&#8220;Events!&#8221;, you may say</h2>
+
+<p>And you&#8217;re right&#8230; more or less. Events and publish/subscribe patterns in general give fairly good decoupling. Simply use pub/sub system built into Angular itself. Let&#8217;s see how it would look like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">app</span><span class="p">.</span><span class="nx">directive</span><span class="p">(</span><span class="s1">&#39;messages&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">$rootScope</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">restrict</span><span class="o">:</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">scope</span><span class="o">:</span> <span class="p">{},</span>
+</span><span class='line'>    <span class="nx">templateUrl</span><span class="o">:</span> <span class="s1">&#39;messages.html&#39;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">link</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">scope</span><span class="p">,</span> <span class="nx">el</span><span class="p">,</span> <span class="nx">attrs</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">messages</span> <span class="o">=</span> <span class="p">[];</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nx">$rootScope</span><span class="p">.</span><span class="nx">$on</span><span class="p">(</span><span class="s1">&#39;msg&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">messages</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span> <span class="nx">type</span><span class="o">:</span> <span class="nx">msg</span><span class="p">.</span><span class="nx">type</span><span class="p">,</span> <span class="nx">text</span><span class="o">:</span> <span class="nx">msg</span><span class="p">.</span><span class="nx">text</span> <span class="p">});</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kd">function</span> <span class="nx">dismiss</span> <span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nx">messages</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">msg</span><span class="p">);</span>
+</span><span class='line'>        <span class="nx">messages</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nx">scope</span><span class="p">.</span><span class="nx">msgSource</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">messages</span><span class="o">:</span> <span class="nx">messages</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">dismiss</span><span class="o">:</span> <span class="nx">dismiss</span>
+</span><span class='line'>      <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To display a message you need to publish a <code>msg</code> event from the <code>$rootScope</code>, like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">$rootScope</span><span class="p">.</span><span class="nx">$emit</span><span class="p">(</span><span class="s1">&#39;msg&#39;</span><span class="p">,</span> <span class="p">{</span> <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;info&#39;</span><span class="p">,</span> <span class="nx">text</span><span class="o">:</span> <span class="s1">&#39;I am message from event&#39;</span><span class="p">}</span> <span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Looks like fairly good way of getting rid of dependencies in directive. Actually it still has one <code>$rootScope</code>, but it&#8217;s not that bad as &#8220;everything&#8221; in Angular is in some scope and technically you could with minimal effort use directive&#8217;s <code>scope</code> instead. But there is one thing that bothers me in this approach: there is no clear concept of messages and messages store. Also there is no clear API saying how it can be used. See? No <code>MessagesStore</code> anywhere, entire well-defined part of the system got blurred somewhere. There is another issue that relates to events in general: if you abuse events and pub/sub in general you&#8217;ll have hard times when reasoning about the code, tracking all the events and their handlers, order of execution etc. It looks like it&#8217;s better in terms of dependencies-coupling, but it has its own problems. So is there a hope? Sure it is (if not why would I write that thing anyway?)</p>
+
+<h2>Make it work, then make it right&#8230;</h2>
+
+<p>So, both solutions work and are perfectly fine in some kind of applications. But I personally like to have my directives to be as independent and reusable as possible. Let&#8217;s say I want exactly the same component in my other application: I can&#8217;t easily take the first one without taking <code>MessagesStore</code> with it. Suppose <code>MessagesStore</code> depends on yet another service and you end up with whole dependency tree to satisfy while you don&#8217;t really need it in your project. Taking the events-based version introduces yet another event publisher and subscriber to complicate your app a bit more. They in turn introduce events that aren&#8217;t &#8220;native&#8221; to your app, they are breaking naming conventions, etc.</p>
+
+<p>Let&#8217;s define what we really want: reusable directive with possibly minimal set of &#8220;component-based&#8221; dependencies that need to be satisfied, that has well defined API and clearly visible domain concept it interacts with.</p>
+
+<p>In both solutions shown above, directive itself comes down to <code>&lt;messages&gt;&lt;/messages&gt;</code> snippet in your view. But directives usage can communicate much more, it can define API, entry points. Instead of relying on directive taking service as dependency on framework level (or internally listening for specific event), provide it with <code>MessagesStore</code>-like object that it could interact with. Pass it to directive&#8217;s isolated scope and make it whatever you want (just stick to <code>MessagesStore</code> API).</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">app</span><span class="p">.</span><span class="nx">directive</span><span class="p">(</span><span class="s1">&#39;messages&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">restrict</span><span class="o">:</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">scope</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">msgSource</span><span class="o">:</span> <span class="s1">&#39;=&#39;</span><span class="p">,</span>
+</span><span class='line'>    <span class="p">},</span>
+</span><span class='line'>    <span class="nx">templateUrl</span><span class="o">:</span> <span class="s1">&#39;messages.html&#39;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&#8217;s all, as simple as that. Now, use it as follows:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;messages</span> <span class="na">msg-source=</span><span class="s">&quot;msgStore&quot;</span><span class="nt">&gt;&lt;/messages&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Because every directive&#8217;s instance lives in some controller&#8217;s scope, just let controller provide stuff that this directive needs:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">app</span><span class="p">.</span><span class="nx">controller</span><span class="p">(</span><span class="s1">&#39;AppCtrl&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">$scope</span><span class="p">,</span> <span class="nx">MessagesStore</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">$scope</span><span class="p">.</span><span class="nx">store</span> <span class="o">=</span> <span class="nx">MessagesStore</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It may look like unnecessary complexity introducing kind of level of indirection, but think of it: when you need to use this directive in any other project you just take it (with no deps) and the only thing to make it working is to provide it with something that quacks like <code>MessagesStore</code>. When you need several instances of such notifier - no worries, just provide each one with separate <code>MessagesStore</code> like object. Doesn&#8217;t matter whether the <code>MessageStore</code>-like thing is service, factory or just simple object created ad-hoc in controller, directive doesn&#8217;t care unless you obey API contract. Another benefit for me personally is that this form of directive (taking attribute defining messages source) is way more readable. It&#8217;s way more informative than cryptic <code>&lt;messages&gt;&lt;/messages&gt;</code> thing.</p>
+
+<p>And that&#8217;s all, that&#8217;s how I&#8217;d code that for now. There is nothing new, nothing complicated and definitely no magic (well, maybe except directive&#8217;s <code>=</code>, for some less experienced angularians). Key is that you don&#8217;t always need to couple stuff on framework level, even if it&#8217;s perfectly doable and easy. Think of long term project development, maintenance, about components reusability, your fellows developers, etc. I&#8217;m not saying this is silver bullet and will work in all your projects, and you should ban injecting any dependencies to directives - I&#8217;m far from that. Just think how would you like to use that directive if you were newcomer and what are potential tradeoffs of each solution (because you always have at least two, don&#8217;t you?).</p>
+
+<p>Regarding <a href="http://c2.com/cgi/wiki?YouArentGonnaNeedIt">YAGNI</a> and not complicating stuff if not required for those who may doubt: initial discussion that triggered this post took place during <strong>migration of some Angular components</strong> from <a href="http://codebrag.com">Codebrag</a> to <a href="https://github.com/softwaremill/bootzooka">Bootzooka</a>, so as you can see thinking a bit about reusability isn&#8217;t that bad.</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2015/01/18/angular-directives-di/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2015/01/18/angular-directives-di/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2015/01/18/angular-directives-di/';
+        var disqus_url = 'http://mostr.github.com/blog/2015/01/18/angular-directives-di/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

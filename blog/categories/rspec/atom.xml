@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: rspec | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/rspec/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Continuous, fast Rspec tests with JRuby on Vagrant]]></title>
+    <link href="http://mostr.github.com/blog/2013/04/07/jruby-rspec-vagrant/"/>
+    <updated>2013-04-07T11:12:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2013/04/07/jruby-rspec-vagrant</id>
+    <content type="html"><![CDATA[<p>I don't code in ruby on daily basis but from time to time I jump into ruby world. Most of the times I have my ruby playground on dedicated <a href="http://www.vagrantup.com">Vagrant</a> virtual machine, so I can play with different setups, gems, packages and even if I break something it's just a matter of few Vagrant commands to get my environment back, in stable state. I use JRuby, but playing with JRuby has few well known drawbacks, one of which is startup time. It is even more important when continuous testing, TDD and quick feedback loop is what you believe in and use it all the day while coding. I prefer RSpec as my testing tool of choice in ruby world and there are few solutions to run tests on every change in files. One of them is <a href="https://github.com/guard/guard">Guard</a>. In its RSpec incarnation it runs <code>rspec</code> command every time file is changed. It works excellent on MRI, but is terribly slow on JRuby due to the fact every run of <code>rspec</code> command requires new java process to start (JVM needs to load all its stuff). There is a solution for that (see note at the end of this post), but the core thing with Guard is that it doesn`t play well with Vagrant.</p>
+
+<p>When using Vagrant as a development environment I often have a project folder shared between my localhost and Vagrant VM so that I can write code locally using e.g. SublimeText and run this code as well as its tests on Vagrant machine. The issue with Guard is that it doesn't handle the case when file is being changed remotely. So it looks Guard isn't well suited for setups like mine. Looking for a solution I found another tool called <a href="https://github.com/mynyml/watchr">Watchr</a>. This is quite old gem with no active development (as far as I can see on Github), but does what I need - reacts on remote file changes. The simplest Watchr config to run RSpec may look as follows (for typical ruby project structure with <code>lib</code> and <code>spec</code> folders):</p>
+
+<p><code>`` ruby .watchr
+def run_spec(file)
+  puts "Running specs: #{file}"
+ </code>rspec -c #{file}`
+end</p>
+
+<p>watch("spec/.<em>/</em>_spec.rb") do |match|
+  run_spec match[0]
+end</p>
+
+<p>watch("app/(.<em>/.</em>).rb") do |match|
+  run_spec %{spec/#{match[1]}_spec.rb}
+end
+```</p>
+
+<p>What it does is: it runs <code>rspec</code> on given spec file when either spec file or corresponding lib file was changed. To run it type <code>watchr .watchr</code>. It detects every file change even the remote one but still has this one huge drawback - runs <code>rspec</code> command every time which is terribly slow (JVM startup, ya remember?). It turns out that separate ruby doesn't need to be run every time to run RSpec. RSpec can be run from within existing ruby runtime via <code>RSpec::Core::Runner.run([file], STDERR, STDOUT)</code>. So it means that if Watchr runs its own JRuby runtime to watch for changes, this runtime can be reused to fire up RSpec internally. Let's change Watchr config file definition to look as follows:</p>
+
+<p>``` ruby .watchr
+require './watchr_spec_runner'</p>
+
+<p>watch("spec/(.<em>/</em>)_spec.rb") do |match|
+  WatchrSpecRunner.new.for_spec_file match[0]
+end</p>
+
+<p>watch("lib/(.<em>/.</em>).rb") do |match|
+  WatchrSpecRunner.new.for_lib_file match[1]
+end
+```</p>
+
+<p>where <code>watchr_spec_runner</code> is my tiny class as below:</p>
+
+<p>``` ruby watchr_spec_runner.rb
+class WatchrSpecRunner</p>
+
+<p>  def for_spec_file(file)</p>
+
+<pre><code>run_spec(file)
+</code></pre>
+
+<p>  end</p>
+
+<p>  def for_lib_file(file)</p>
+
+<pre><code>load_lib_file(file)
+run_spec(to_spec(file))
+</code></pre>
+
+<p>  end</p>
+
+<p>  private</p>
+
+<p>  def initialize</p>
+
+<pre><code>@spec_dir = 'spec'
+@lib_dir = 'lib'
+@specs_suffix = '_spec.rb'
+</code></pre>
+
+<p>  end</p>
+
+<p>  def to_spec(file)</p>
+
+<pre><code>"#{@spec_dir}/#{file}#{@specs_suffix}"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def load_lib_file(file)</p>
+
+<pre><code>load "#{@lib_dir}/#{file}.rb"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def run_spec(file)</p>
+
+<pre><code>require 'rspec'
+RSpec.configure do |config|
+  config.color_enabled = true
+  config.tty = true
+end
+begin
+  ::RSpec::Core::Runner.run([file], STDERR, STDOUT)
+rescue Exception =&gt; e
+  STDERR.puts e.message
+  STDERR.puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
+end
+</code></pre>
+
+<p>  end</p>
+
+<p>end</p>
+
+<p>```</p>
+
+<p>Now Watchr startup takes some time (as usual), but then running specs is blazingly fast. Of course provided Watchr configuration together with my <code>WatchrSpecRunner</code> class are dead simple and have just very, very basic funcionality - run spec when file changes. There is a lot more to do e.g. run all specs when going back to green from red phase, etc.</p>
+
+<p>So this is what I came up with when talking about JRuby Vagrant and continuous RSpec run. For complete local development with JRuby I'd probably use Guard as it is more mature, has more features, is actively developed and easier to use.</p>
+
+<p><strong>Guard with RSpec for JRuby note:</strong></p>
+
+<p>There is an implementation of Guard-rspec for JRuby <a href="https://github.com/jkutner/guard-jruby-rspec">here</a>, but currently available version has an quite annoying issue - when you change spec file it "magically" doubles specs number run. <a href="https://github.com/jkutner/guard-jruby-rspec/pull/22">My pull-request</a> with fix for that was already merged, so you may want to use latest version from Github until it is released.</p>
+]]></content>
+  </entry>
+  
+</feed>

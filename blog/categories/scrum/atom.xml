@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: scrum | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/scrum/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Applying scrum is not about having daily stand-ups]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/05/applying-scrum-is-not-about-having-daily-stand-ups/"/>
+    <updated>2012-10-05T16:42:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/05/applying-scrum-is-not-about-having-daily-stand-ups</id>
+    <content type="html"><![CDATA[<p>Recently I had a chance to give short introduction to scrum to few new-joiners who have never had a chance to experience it. I started from explaining that it is not a software development method but more like project management framework. I briefly described all those artifacts, roles and events scrum constitutes. Then I started talking about this whole agile idea as a foundation for successful scrum adoption: what it means to "be agile" or have "agile project". There was a lot about communication, transparency, self-management and so on, but also (on a codebase level) about simple design, code quality, best engineering practices and software development principles, automation, testing, code reviews etc. It was all in context of delivering high quality, valuable software. Then I was asked a question:</p>
+
+<h2>Is this all really required by scrum?</h2>
+
+<p>Uhmmm, I could say both: yes and no. <em>No</em>, because it is not part of scrum "definition" by the book. This is theoretically up to you how you fill scrum internals. The only thing scrum says is that you should ship high quality, working software regularly, adapt to changing requirements when new iteration is coming and so on. This is hard and that's why I'd say <em>yes</em>. To have a chance to be successful with scrum implementation (assuming your organization and client is ready and all the prerequisites are satisfied) you must start improving the way you work and start applying the practices above. Otherwise those demanding scrum requirements and unsatisfied rules will start to annoy you and you will start cutting them off. Eventually you'll end up with your <em>"custom scrum"</em> having only stand-ups and few-weeks-long iterations where you just change the code. And that's all. You will still be unable to deliver your work regularly, with high quality. You will still be missing the ability to adapt to new requirements quickly. You will still be seeing this giant spaghetti monster staring at you from your codebase on every change, preventing you from doing your job right.</p>
+
+<p>For me all the roles, events and artifacts scrum introduces are only to help you manage the project not develop code. It is good to know them, and master them, but they don't replace solid engineering practices in any way. If you happen to know project that advertises itself as <em>"using scrum"</em>, ask its members about continuous build, tests, design, release process they have. I know many projects like this which just use "scrum" as a catchy marketing flag only. They are not able to deliver their work with high quality, they struggle with heavy processes, every requirements change takes ages to implement etc. But hey - they <em>"use scrum"</em>: they have stand-ups, iterations and so on. The sad news is it doesn't help. Those who are agile (it maybe scrum incarnation of agility) don't have to wave this "scrum" flag. They just deliver excellent results with excellent way because they can, they focus on that and on improving the way they work.</p>
+
+<p>So to sum up, scrum adoption is not about daily stand-ups and other things you can learn from Scrum Guide etc. They are important but they are only "nice-to-have" tools in your toolbox. They will not work for you if used with no high skills, good habits and engineering practices and principles applied. What's more, you can hurt yourself, screw up the project and end up with well-known:</p>
+
+<blockquote><p>Scrum is a crap. Maybe it works for others, but it doesn't work for us. Our project is very specific.</p></blockquote>
+
+<p>Remember that (following Scrum Guide):</p>
+
+<blockquote><p>Scrum is lightweight, simple to understand and extremely difficult to master.</p></blockquote>
+
+<p>This is because to satisfy its requirements and have this machinery running smooth in right direction you must have high quality internals inside. You need to take care of them, fine-tune and improve them every time. And it is not coincidence that you skills and your attitude to crafting excellent software the right way are significant part of those internals.</p>
+]]></content>
+  </entry>
+  
+</feed>

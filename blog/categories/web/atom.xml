@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: web | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/web/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[You don't always need DI in AngularJS directives]]></title>
+    <link href="http://mostr.github.com/blog/2015/01/18/angular-directives-di/"/>
+    <updated>2015-01-18T22:43:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2015/01/18/angular-directives-di</id>
+    <content type="html"><![CDATA[<p>This post is a follow up to the discussion about Angular directives we had recently in <a href="http://softwaremill.com">SoftwareMill</a> with <a href="https://twitter.com/marcin_kubala">Marcin Kubala</a>. Marcin was working on refreshing our Scala with AngularJS scaffolding project called <a href="https://github.com/softwaremill/bootzooka">Bootzooka</a>.</p>
+
+<h2>Use case</h2>
+
+<p>We want to display some notifications to user (think of it as a Twitter Bootstrap's "alert" component). This is to let user know for example that changes he made were either successfuly saved or not, or display any other information user would be able to dismiss once read. There is usually one such place in application that displays that kind of things.</p>
+
+<h2>To the code</h2>
+
+<p>So let's say we have Angular component to keep and manage (add new, dismiss) messages to display. It's gonna be <code>factory</code> so that it nicely encapsulates data and behavior we need and it's easily injectable to almost any other component. Here is slightly simplified version, just for this post's purposes:</p>
+
+<p>``` javascript
+app.factory('MessagesStore', function () {</p>
+
+<p>  var messages = []</p>
+
+<p>  function dismiss(msg) {</p>
+
+<pre><code>var i = messages.indexOf(msg);
+messages.splice(i, 1);
+</code></pre>
+
+<p>  }</p>
+
+<p>  function add(type, text) {</p>
+
+<pre><code>messages.push({ type: type, text: text });
+</code></pre>
+
+<p>  }</p>
+
+<p>  return {</p>
+
+<pre><code>messages: messages,
+dismiss: dismiss,
+add: add
+</code></pre>
+
+<p>  }</p>
+
+<p>})
+```</p>
+
+<p>Once we have place to store and access messages to be displayed, let's make it displayable with directive. At first we'll define simple template for directive to use:</p>
+
+<p>
+``` html</p>
+
+<pre><code>&lt;script id="messages.html" type="text/ng-template"&gt;
+  &lt;ul class="messages"&gt;
+    &lt;li ng-repeat="m in msgSource.messages"&gt;
+      {{ m.type }}: {{ m.text }} &lt;button ng-click="msgSource.dismiss(m)"&gt;dismiss&lt;/button&gt;
+    &lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/script&gt;
+</code></pre>
+
+<p>```
+</p>
+
+<p>No rocket science here, just simple <code>ng-repeat</code> to display all stored messages. Also each displayed message can be dismissed by user by clicking <strong>dismiss</strong> button next to it. Now, let's move on to the actual directive:</p>
+
+<p>``` javascript
+app.directive('messages', function (MessagesStore) {</p>
+
+<p>  return {</p>
+
+<pre><code>restrict: 'E',
+templateUrl: 'messages.html',
+link: function(scope) {
+  scope.msgSource = MessagesStore;
+}
+</code></pre>
+
+<p>  }</p>
+
+<p>})
+```</p>
+
+<p>As you can see to let directive know about messages to display we simply inject <code>MessagesStore</code> and make use of it (in this case simply assigning it to <code>msgSource</code> used in template). Obviously if there were other stuff to be done (like auto-dismissing messages after some time etc.) there would be more code in <code>link</code> function, but let's not complicate things.</p>
+
+<p>And now... it's done, you may say. It works like a charm, displays any messages that are already stored in <code>MessagesStore</code> and lets you dismiss every single one. Sure, but I personally see one drawback here: this directive is tightly coupled to <code>MessagesStore</code> service. You cannot use it without having this service around and I don't feel this is the best solution. I like to have my directives being independent from other components as much as possible. So let's see how can we deal with it and make it a bit better.</p>
+
+<h2>"Events!", you may say</h2>
+
+<p>And you're right... more or less. Events and publish/subscribe patterns in general give fairly good decoupling. Simply use pub/sub system built into Angular itself. Let's see how it would look like:</p>
+
+<p>``` javascript
+app.directive('messages', function ($rootScope) {</p>
+
+<p>  return {</p>
+
+<pre><code>restrict: 'E',
+scope: {},
+templateUrl: 'messages.html',
+link: function(scope, el, attrs) {
+
+  var messages = [];
+
+  $rootScope.$on('msg', function (e, msg) {
+    messages.push({ type: msg.type, text: msg.text });  
+  });
+
+  function dismiss (msg) {
+    var i = messages.indexOf(msg);
+    messages.splice(i, 1);
+  }
+
+  scope.msgSource = {
+    messages: messages,
+    dismiss: dismiss
+  };
+
+}
+</code></pre>
+
+<p>  }</p>
+
+<p>})
+<code>``
+To display a message you need to publish a</code>msg<code>event from the</code>$rootScope`, like this:</p>
+
+<p><code>javascript
+$rootScope.$emit('msg', { type: 'info', text: 'I am message from event'} );
+</code></p>
+
+<p>Looks like fairly good way of getting rid of dependencies in directive. Actually it still has one <code>$rootScope</code>, but it's not that bad as "everything" in Angular is in some scope and technically you could with minimal effort use directive's <code>scope</code> instead. But there is one thing that bothers me in this approach: there is no clear concept of messages and messages store. Also there is no clear API saying how it can be used. See? No <code>MessagesStore</code> anywhere, entire well-defined part of the system got blurred somewhere. There is another issue that relates to events in general: if you abuse events and pub/sub in general you'll have hard times when reasoning about the code, tracking all the events and their handlers, order of execution etc. It looks like it's better in terms of dependencies-coupling, but it has its own problems. So is there a hope? Sure it is (if not why would I write that thing anyway?)</p>
+
+<h2>Make it work, then make it right...</h2>
+
+<p>So, both solutions work and are perfectly fine in some kind of applications. But I personally like to have my directives to be as independent and reusable as possible. Let's say I want exactly the same component in my other application: I can't easily take the first one without taking <code>MessagesStore</code> with it. Suppose <code>MessagesStore</code> depends on yet another service and you end up with whole dependency tree to satisfy while you don't really need it in your project. Taking the events-based version introduces yet another event publisher and subscriber to complicate your app a bit more. They in turn introduce events that aren't "native" to your app, they are breaking naming conventions, etc.</p>
+
+<p>Let's define what we really want: reusable directive with possibly minimal set of "component-based" dependencies that need to be satisfied, that has well defined API and clearly visible domain concept it interacts with.</p>
+
+<p>In both solutions shown above, directive itself comes down to <code>&lt;messages&gt;&lt;/messages&gt;</code> snippet in your view. But directives usage can communicate much more, it can define API, entry points. Instead of relying on directive taking service as dependency on framework level (or internally listening for specific event), provide it with <code>MessagesStore</code>-like object that it could interact with. Pass it to directive's isolated scope and make it whatever you want (just stick to <code>MessagesStore</code> API).</p>
+
+<p>``` javascript
+app.directive('messages', function () {</p>
+
+<p>  return {</p>
+
+<pre><code>restrict: 'E',
+scope: {
+  msgSource: '=',
+},
+templateUrl: 'messages.html'
+</code></pre>
+
+<p>  }</p>
+
+<p>});
+```
+That's all, as simple as that. Now, use it as follows:</p>
+
+<p><code>html
+&lt;messages msg-source="msgStore"&gt;&lt;/messages&gt;
+</code></p>
+
+<p>Because every directive's instance lives in some controller's scope, just let controller provide stuff that this directive needs:</p>
+
+<p>``` javascript
+app.controller('AppCtrl', function($scope, MessagesStore) {</p>
+
+<p>  $scope.store = MessagesStore;</p>
+
+<p>});
+```</p>
+
+<p>It may look like unnecessary complexity introducing kind of level of indirection, but think of it: when you need to use this directive in any other project you just take it (with no deps) and the only thing to make it working is to provide it with something that quacks like <code>MessagesStore</code>. When you need several instances of such notifier - no worries, just provide each one with separate <code>MessagesStore</code> like object. Doesn't matter whether the <code>MessageStore</code>-like thing is service, factory or just simple object created ad-hoc in controller, directive doesn't care unless you obey API contract. Another benefit for me personally is that this form of directive (taking attribute defining messages source) is way more readable. It's way more informative than cryptic <code>&lt;messages&gt;&lt;/messages&gt;</code> thing.</p>
+
+<p>And that's all, that's how I'd code that for now. There is nothing new, nothing complicated and definitely no magic (well, maybe except directive's <code>=</code>, for some less experienced angularians). Key is that you don't always need to couple stuff on framework level, even if it's perfectly doable and easy. Think of long term project development, maintenance, about components reusability, your fellows developers, etc. I'm not saying this is silver bullet and will work in all your projects, and you should ban injecting any dependencies to directives - I'm far from that. Just think how would you like to use that directive if you were newcomer and what are potential tradeoffs of each solution (because you always have at least two, don't you?).</p>
+
+<p>Regarding <a href="http://c2.com/cgi/wiki?YouArentGonnaNeedIt">YAGNI</a> and not complicating stuff if not required for those who may doubt: initial discussion that triggered this post took place during <strong>migration of some Angular components</strong> from <a href="http://codebrag.com">Codebrag</a> to <a href="https://github.com/softwaremill/bootzooka">Bootzooka</a>, so as you can see thinking a bit about reusability isn't that bad.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Why I never really loved Angular auto-unwrapping promises in view]]></title>
+    <link href="http://mostr.github.com/blog/2013/12/05/angular-promises-unwrapping/"/>
+    <updated>2013-12-05T08:23:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2013/12/05/angular-promises-unwrapping</id>
+    <content type="html"><![CDATA[<p>One Angular feature that was visually cool (from developer's perspective) was that you could pass promise directly to view and it work on it in HTML as if it was already resolved. I wrote "it was" because Angular folks decided to disable it by default in latest big 1.2 release - you can read more about it <a href="https://github.com/angular/angular.js/commit/5dc35b527b3c99f6544b8cb52e93c6510d3ac577">here</a>.</p>
+
+<p>Let's recap how this auto-unwrapping used to work before 1.2. Let's have simple service that returns list of items wrapped in promise and call this service from controller.</p>
+
+<p>``` javascript
+  app.controller('ItemsListCtrl', function($scope, itemsService) {</p>
+
+<pre><code>$scope.items = itemsService.loadItems();
+$scope.reload = function() {
+  $scope.items = itemsService.loadItems();
+};
+</code></pre>
+
+<p>  });</p>
+
+<p>  app.service('itemsService', function($q) {</p>
+
+<pre><code>this.loadItems = function() {
+  var items = ['item 1', 'item 2', 'item 3', Math.random()];
+  return $q.when(items);
+};
+</code></pre>
+
+<p>  });
+```</p>
+
+<p>On the view let's display fetched items together with button to reload this list (it just fetches the same list again with random value added to clearly see it was reloaded).</p>
+
+<p>``` html
+  <ul></p>
+
+<pre><code>&lt;li ng-repeat="i in items"&gt;&lt;/li&gt;
+</code></pre>
+
+<p>  </ul>
+  <button ng-click="reload()">Reload items</button>
+```</p>
+
+<h2>It's a list except when it's not</h2>
+
+<p>You can play with this example on <a href="http://jsfiddle.net/mostr/kQjKH/2/">JSFiddle</a>. It works like a charm, displays items, reloads list and so on, so what's the issue, you may ask?
+Well, looking at the code of the controller it's not obvious, that <code>$scope.items</code> is really a promise. It looks as simple assignment - you load items and assign list of those items to <code>$scope.items</code>. Nice and clean, but try to e.g. log size of this list, like this:</p>
+
+<p>``` javascript
+  app.controller('ItemsListCtrl', function($scope, itemsService, $log) {</p>
+
+<pre><code>$scope.items = itemsService.loadItems();
+$log.info($scope.items.length); // boom!
+</code></pre>
+
+<p>  });
+```</p>
+
+<p>You'll get <code>undefined</code> in console. Surprised? Maybe not in this simple case, but I expect it could bite you hard in real project with larger and more complicated codebase. To confuse you a bit more, when you try to display the same thing in view using <code>items.length</code> binding, it works fine. It is all because when dealing with <code>$scope.items</code> in controller you in fact deal with promise not the actual list of items, but on the view layer you get unwrapped result to play with.</p>
+
+<h2>I disappear</h2>
+
+<p>There is another surprise you can spot while relying on this automatic promises unwrapping. Let's add some delay to our list loading function, so that it emulates fetching data from server (like in real HTTP call there is small delay as server needs to be called).</p>
+
+<p>``` javascript
+  app.service('itemsService', function($q, $timeout) {</p>
+
+<pre><code>this.loadItems = function() {
+  var dfd = $q.defer();
+  $timeout(function() {
+    var items = ['item 1', 'item 2', 'item 3', Math.random()];
+    dfd.resolve(items);
+  }, 500);
+  return dfd.promise;
+};
+</code></pre>
+
+<p>  });
+```</p>
+
+<p>Again go to <a href="http://jsfiddle.net/mostr/7qAbP/2/">this fiddle</a> to see it running. Now when you hit "reload" button, this list disappears for a while and then appears back. This is again due to the fact that you pass raw promise to the view. It cannot render until this promise gets resolved, so it renders nothing and appears again when promise is resolved. So the longer the delay is the more unpleasant the experience can be. How to avoid that? One solution is to delay controller instantiation until promises are resolved (using resolve property on route) but that's not one I'm gonna show here. The exact one is explicitly deal with promises like below:</p>
+
+<p>``` javascript
+  app.controller('ItemsListCtrl', function($scope, itemsService) {</p>
+
+<pre><code>itemsService.loadItems().then(passItemsToScope);
+$scope.reload = function() {
+  itemsService.loadItems(passItemsToScope);
+};
+function passItemsToScope(items) {
+  $scope.items = items;
+}
+</code></pre>
+
+<p>  });
+```</p>
+
+<p>That's few keystrokes more but for me it's definitely worth it. Now you don't touch existing items list until promise is resolved so swapping actual list is blazingly fast - go and try it <a href="http://jsfiddle.net/mostr/qG7jV/2/">there</a>. The list doesn't disappear while waiting for promise to be resolved - it just stays there and gets reassigned and rerendered in (almost) one go. Another benefit is that this code clearly says what it does and aligns nicely with <a href="http://en.wikipedia.org/wiki/Principle_of_least_astonishment">Principle of least surprise</a>. You clearly see that what is returned from <code>itemsService.loadItems()</code> is a promise, so you can deal with it accordingly.</p>
+
+<h2>Summary</h2>
+
+<p>I don't say that both of those points mentioned above are vailid in all cases. It can serve you well, especially the one with disappearing content (some may have such requirement). Anyway I'm personally (<a href="https://twitter.com/mostruszka/status/391253436382978049">really</a>) happy, that Angular folks decided to disable that feature from version 1.2+. Even if it was visually appealing, clean and so on it could potentially introduce a lot of WTFs to your daily work. If you by any chance really miss that feature, there is a way to bring it back, but I'm sorry I'm not gonna give you a clear hint how to do that.</p>
+]]></content>
+  </entry>
+  
+</feed>

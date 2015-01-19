@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Speaking multiple programming languages - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="Those times when there was only one programming language in project and it was used for everything are gone. Times, when being familar with only one &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2012/10/12/speaking-multiple-languages">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">Speaking multiple programming languages</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-12T10:52:00+02:00" pubdate data-updated="true">Oct 12<span>th</span>, 2012</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Those times when there was only one programming language in project and it was used for everything are gone. Times, when being familar with only one language was enough are also gone. These days you are expected to know something more besides your &#8220;main&#8221; language, to be familiar with different concepts and ways of doing things etc.
+Almost every few days there is new language showing up (especially in JVM field) so there is wide range of languages to learn. Also it seems to me that the pragmatic &#8220;right tool for the right job&#8221; way of thinking is getting more and more popular, which is good I think.</p>
+
+<p>Let&#8217;s take real example, case I had in the past. Few years ago when I was &#8220;only java&#8221; guy I had to write a tiny web scraping tool. It was natural for me those days to do it in java - why not?. You can imagine this huge amount of (not well designed) code, giant amounts of xml-parsing-related objects flying around, do you? I&#8217;m not saying there is no way to write that effectively in java. I&#8217;m sure it is, but personally if I had to do that again now, I&#8217;d use either ruby possibly with excellent Nokogiri gem, or groovy with its XmlSlurper. Few lines of code and I could get all I needed with less effort, flexibility and highly readable syntax. And what is also important, with the job done.<br/>
+Another example: you just need to write web application with &#8220;heavy&#8221; backend. Sure, you can do that all in java with jsf, spring mvc, struts, wicket or whatever on the front-end and spring/java ee on the backend side. But these days, you can combine different, sometimes more suitable technologies/languages on the front-end with completely different stack on the backend. Imagine your app having ruby (rails, padrino, or even sinatra) on the front-end and with java ee components on the backend. Tempting, huh?</p>
+
+<p>But there is also another advantage of going multi-language. The one that I see as really important from point of view of personal growth in software development area. Just playing with other languages makes you familiar with different ways of solving the same problems, different design approaches and coding styles. It&#8217;s not about lines of code, speed and readability. It&#8217;s more about completely different language constructions and paradigms you can learn and keep as inspiration in your toolbox for later use. For example, being &#8220;only java&#8221; you have no chance to experience features java doesn&#8217;t have (yet) like closures, blocks, dynamic language features, functional programming aspects etc. You may not realize the real power of the fact that e.g. in scala, javascript (coffescript or typescript) you can pass function (&#8220;operation&#8221; to be invoked) as an argument to another function or even return it. Have you ever had to anonymously implement an interface and pass this implementation to the method call in order to mimic such feature in java? You may not know that e.g. in ruby you can easily generate classes and methods on the fly, and that there is this great metaprogramming magic and you create DSLs that are pure beauty. Think of how you can improve your tools with such DSLs!
+Being open for other languages and getting to know them (even if you don&#8217;t plan to switch completely) allows you to see how different approaches to similar concepts they have, like java inheritance vs prototypal inheritance in javascript, mixins and singletons in ruby, or meet their concepts not available in java like implicit conversions that looks like dynamic typing in scala and so on.</p>
+
+<p>Even if you are not as experienced in those &#8220;side&#8221; languages as in your &#8220;main&#8221; one, I&#8217;m sure you can really benefit from that experience. You will start looking at the problem in hand from different point of views, having different possible approaches to solving it. Been there, done that although I can&#8217;t say I&#8217;m an expert in those languages - I&#8217;ve simply learnt some of their concepts. Maybe not all of that will be possible to code in java (or any other language that is your &#8220;main&#8221; one) but it&#8217;s huge bonus to have more possible ideas for one problem. And hey, you have one more tool/toy to use if you happen to face with the job that fits it. Isn&#8217;t that cool?</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2012/10/12/speaking-multiple-languages/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2012/10/12/speaking-multiple-languages/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2012/10/12/speaking-multiple-languages/';
+        var disqus_url = 'http://mostr.github.com/blog/2012/10/12/speaking-multiple-languages/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

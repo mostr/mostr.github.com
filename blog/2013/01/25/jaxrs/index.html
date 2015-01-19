@@ -1,0 +1,344 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Quick glance at JAX-RS 2.0 Client API - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="JAX-RS 2.0 is going to be included in Java EE 7, so I thought I&#8217;d play with it a bit to get familiar with what&#8217;s new there. One thing &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2013/01/25/jaxrs">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">Quick glance at JAX-RS 2.0 Client API</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-01-25T08:44:00+01:00" pubdate data-updated="true">Jan 25<span>th</span>, 2013</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>JAX-RS 2.0 is going to be included in Java EE 7, so I thought I&#8217;d play with it a bit to get familiar with what&#8217;s new there. One thing that is going to be standarized in specification (JSR-399) is Client API.
+Up until now to consume REST or semi-REST (just JSON or XML) web services you could use some non-standarized API of Jersey, CXF, RESTEasy etc or (heaven forbid) roll your own stuff. In this post I&#8217;d like to show you how easy it is to consume RESTful services using this standarized API.</p>
+
+<p>First of all, be aware that this API is still in non-final version (currently in Public Review). There are also some inconsistencies between what specification says and what is currently implemented in e.g. reference implementation from Jersey and RESTEasy.</p>
+
+<p>So to begin with I created maven project with only those two dependencies:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="c">&lt;!-- well, reference implementation --&gt;</span>
+</span><span class='line'><span class="nt">&lt;dependency&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;groupId&gt;</span>org.glassfish.jersey.bundles<span class="nt">&lt;/groupId&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;artifactId&gt;</span>jax-rs-ri<span class="nt">&lt;/artifactId&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;version&gt;</span>2.0-m10<span class="nt">&lt;/version&gt;</span>
+</span><span class='line'><span class="nt">&lt;/dependency&gt;</span>
+</span><span class='line'><span class="c">&lt;!-- jackson dependency as we are going to consume JSON responses --&gt;</span>
+</span><span class='line'><span class="nt">&lt;dependency&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;groupId&gt;</span>org.codehaus.jackson<span class="nt">&lt;/groupId&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;artifactId&gt;</span>jackson-jaxrs<span class="nt">&lt;/artifactId&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;version&gt;</span>1.9.9<span class="nt">&lt;/version&gt;</span>
+</span><span class='line'><span class="nt">&lt;/dependency&gt;</span>
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&#8217;s play with Twitter search for this example. As we don&#8217;t want to parse response JSON by hand, I&#8217;m gonna create the following data structure to let Jackson transform JSON response to. It is very simple class with all-stuff-public for ease of use.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@JsonIgnoreProperties</span><span class="o">(</span><span class="n">ignoreUnknown</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
+</span><span class='line'><span class="kd">class</span> <span class="nc">TwitterSearchResults</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Tweet</span><span class="o">&gt;</span> <span class="n">results</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@JsonIgnoreProperties</span><span class="o">(</span><span class="n">ignoreUnknown</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Tweet</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">&quot;from_user&quot;</span><span class="o">)</span>
+</span><span class='line'>      <span class="kd">public</span> <span class="n">String</span> <span class="n">user</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kd">public</span> <span class="n">String</span> <span class="n">text</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So how does JAX-RS 2.0 Client API call look like? Actually it&#8217;s pretty simple, just fire the code below and it will give you <code>TwitterSearchResults</code> object back.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Client</span> <span class="n">client</span> <span class="o">=</span> <span class="n">ClientFactory</span><span class="o">.</span><span class="na">newClient</span><span class="o">();</span>
+</span><span class='line'><span class="n">client</span><span class="o">.</span><span class="na">configuration</span><span class="o">().</span><span class="na">register</span><span class="o">(</span><span class="n">JacksonJsonProvider</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class='line'><span class="n">TwitterSearchResults</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">target</span><span class="o">(</span><span class="s">&quot;http://search.twitter.com/search.json&quot;</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">queryParam</span><span class="o">(</span><span class="s">&quot;q&quot;</span><span class="o">,</span> <span class="s">&quot;jaxrs&quot;</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">request</span><span class="o">(</span><span class="s">&quot;application/json&quot;</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">TwitterSearchResults</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class='line'><span class="n">client</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is the simplest form you can use, but there is more stuff to make it even better.
+It is important to keep in mind that creating <code>Client</code> instance is heavyweight and expensive process, so it is advised to keep configured instance of <code>Client</code> around.
+As you can see <code>Client</code> can be configured before use by registering <code>Providers</code>, <code>Filters</code> and <code>Features</code>. Here I&#8217;m just registering one provider, <code>JacksonJsonProvider</code> but there may be any number of providers registered. In that case, when client is going to be heavily configured via registering providers and setting some properties it may be better to use <code>Feature</code> instead. So what this <code>Feature</code> is?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">class</span> <span class="nc">JsonParsingFeature</span> <span class="kd">implements</span> <span class="n">Feature</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nd">@Override</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">configure</span><span class="o">(</span><span class="n">Configurable</span> <span class="n">configurable</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">configurable</span><span class="o">.</span><span class="na">register</span><span class="o">(</span><span class="n">JacksonJsonProvider</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class='line'>      <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is an implementation of <code>Feature</code> interface that gets <code>Configurable</code> and can play with it to register/unregister providers, set properties etc. In current version of specification it is said that <code>Feature</code> must implement <code>enable</code> and <code>disable</code> methods but there is no such thing in both RI and RESTEasy beta implementations. Moreover specification says there should be <code>enableFeature</code> method to include given feature, but in RI it turns out there is just <code>register</code> method instead and in current RESTEasy implementation there is no way to register feature.
+So with this tiny feature implemented we can replace registration of <code>JacksonJsonProvider</code> with registration of <code>JsonParsingFeature</code>. Not a big deal, but imagine heavily customized client - you can split configuration into features and enable/disable them with just one line.</p>
+
+<p><code>Client</code> interface is nice example of fluent interfaces where you can chain methods to get desired result. But it still may seem too low level for some of you, right? Can we encapsulate this client&#8217;s operation and expose even simpler API? Sure we can, with little help of <code>Invocation</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="c1">// hide all the low-level details from caller</span>
+</span><span class='line'><span class="n">Invocation</span> <span class="n">invocation</span> <span class="o">=</span> <span class="n">client</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">target</span><span class="o">(</span><span class="s">&quot;http://search.twitter.com/search.json&quot;</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">queryParam</span><span class="o">(</span><span class="s">&quot;q&quot;</span><span class="o">,</span> <span class="s">&quot;jaxrs&quot;</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">request</span><span class="o">(</span><span class="s">&quot;application/json&quot;</span><span class="o">)</span>
+</span><span class='line'>      <span class="o">.</span><span class="na">buildGet</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// simply use invocation</span>
+</span><span class='line'><span class="n">TwitterSearchResults</span> <span class="n">response</span> <span class="o">=</span> <span class="n">invocation</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">TwitterSearchResults</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So that&#8217;s the basic usage of new JAX-RS 2.0 API. There is more things to cover like registering <code>Filters</code>, creating <code>WebTargets</code> - request templates (with <code>{param}</code> tokens) that can be replaced dynamically. Also <code>async()</code> can be used to make asynchronous request and get <code>Future</code> instance back for later evaluation.</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2013/01/25/jaxrs/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2013/01/25/jaxrs/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2013/01/25/jaxrs/';
+        var disqus_url = 'http://mostr.github.com/blog/2013/01/25/jaxrs/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: test | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/test/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Selectively run specs or suites in Jasmine]]></title>
+    <link href="http://mostr.github.com/blog/2013/11/06/selective-specs-in-jasmine/"/>
+    <updated>2013-11-06T22:38:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2013/11/06/selective-specs-in-jasmine</id>
+    <content type="html"><![CDATA[<p>I'm sure you write tests for your code. There is no excuse for that, even for Javascript - language which used to be treated as a toy one some time ago. Now Javascript ecosystem changed and its toolbox is full of development tools also those for testing purposes.</p>
+
+<p>One of the most popular testing tools for Javascript is <a href="http://pivotal.github.io/jasmine">Jasmine</a>. It can be run in browser via HTML runner or as a part of automated workflow (which I highly recommend to build for every serious JS app). Sometimes when working on some particular feature, or fixing some stuff you may not want to have all your specs in all suites run every time you touch source file. Suppose you have tons of tests failing (e.g. due to upgrade of some core library) with a lot of errors but you want to focus on just few of them and fix them one by one. It'd be great if there was an ability to let Jasmine know to run only specs you wanted. So how to to it? Looks like there is not much about it in Jasmine documentation. The only thing mentioned is you can disable given suite by changing <code>describe</code> to <code>xdescribe</code> or changing <code>it</code> to <code>xit</code> for single spec. But it'd be silly to disable hundreds of tests that way just to be able to run few others, right?</p>
+
+<p>It turns out that there is much easier way to do that. Let's look at the code below:</p>
+
+<p>``` javascript running single spec
+describe('Your awesome feature' function() {</p>
+
+<p>  it('should do something', function() {</p>
+
+<pre><code>// stuff here
+</code></pre>
+
+<p>  });</p>
+
+<p>  // only this spec will be run
+  iit('should not do something other', function() {</p>
+
+<pre><code>// stuff here
+</code></pre>
+
+<p>  });</p>
+
+<p>});
+```</p>
+
+<p>In the code above changing regular <code>it</code> in second spec definition to <code>iit</code> disables all other tests (in all suites that are about to run) except this one. To run whole suite with several specs in it just change <code>describe</code> to <code>ddescribe</code> and only this suite's specs will be run. There is no need to add <code>iit</code> in every single spec inside. See the code below:</p>
+
+<p>``` javascript running single suite
+// only specs in this suite will be run
+ddescribe('Your awesome feature' function() {</p>
+
+<p>  it('should do something', function() {</p>
+
+<pre><code>// stuff here
+</code></pre>
+
+<p>  });</p>
+
+<p>  it('should not do something other', function() {</p>
+
+<pre><code>// stuff here
+</code></pre>
+
+<p>  });</p>
+
+<p>});
+```</p>
+
+<p>You can mark several specs/suites that way and all of them will be run exclusively. This behavior although not well documented is Jasmine feature and is independent on runner you use to run your tests. I personally use <a href="http://karma-runner.github.io">Karma</a> and it works like a charm.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Continuous, fast Rspec tests with JRuby on Vagrant]]></title>
+    <link href="http://mostr.github.com/blog/2013/04/07/jruby-rspec-vagrant/"/>
+    <updated>2013-04-07T11:12:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2013/04/07/jruby-rspec-vagrant</id>
+    <content type="html"><![CDATA[<p>I don't code in ruby on daily basis but from time to time I jump into ruby world. Most of the times I have my ruby playground on dedicated <a href="http://www.vagrantup.com">Vagrant</a> virtual machine, so I can play with different setups, gems, packages and even if I break something it's just a matter of few Vagrant commands to get my environment back, in stable state. I use JRuby, but playing with JRuby has few well known drawbacks, one of which is startup time. It is even more important when continuous testing, TDD and quick feedback loop is what you believe in and use it all the day while coding. I prefer RSpec as my testing tool of choice in ruby world and there are few solutions to run tests on every change in files. One of them is <a href="https://github.com/guard/guard">Guard</a>. In its RSpec incarnation it runs <code>rspec</code> command every time file is changed. It works excellent on MRI, but is terribly slow on JRuby due to the fact every run of <code>rspec</code> command requires new java process to start (JVM needs to load all its stuff). There is a solution for that (see note at the end of this post), but the core thing with Guard is that it doesn`t play well with Vagrant.</p>
+
+<p>When using Vagrant as a development environment I often have a project folder shared between my localhost and Vagrant VM so that I can write code locally using e.g. SublimeText and run this code as well as its tests on Vagrant machine. The issue with Guard is that it doesn't handle the case when file is being changed remotely. So it looks Guard isn't well suited for setups like mine. Looking for a solution I found another tool called <a href="https://github.com/mynyml/watchr">Watchr</a>. This is quite old gem with no active development (as far as I can see on Github), but does what I need - reacts on remote file changes. The simplest Watchr config to run RSpec may look as follows (for typical ruby project structure with <code>lib</code> and <code>spec</code> folders):</p>
+
+<p><code>`` ruby .watchr
+def run_spec(file)
+  puts "Running specs: #{file}"
+ </code>rspec -c #{file}`
+end</p>
+
+<p>watch("spec/.<em>/</em>_spec.rb") do |match|
+  run_spec match[0]
+end</p>
+
+<p>watch("app/(.<em>/.</em>).rb") do |match|
+  run_spec %{spec/#{match[1]}_spec.rb}
+end
+```</p>
+
+<p>What it does is: it runs <code>rspec</code> on given spec file when either spec file or corresponding lib file was changed. To run it type <code>watchr .watchr</code>. It detects every file change even the remote one but still has this one huge drawback - runs <code>rspec</code> command every time which is terribly slow (JVM startup, ya remember?). It turns out that separate ruby doesn't need to be run every time to run RSpec. RSpec can be run from within existing ruby runtime via <code>RSpec::Core::Runner.run([file], STDERR, STDOUT)</code>. So it means that if Watchr runs its own JRuby runtime to watch for changes, this runtime can be reused to fire up RSpec internally. Let's change Watchr config file definition to look as follows:</p>
+
+<p>``` ruby .watchr
+require './watchr_spec_runner'</p>
+
+<p>watch("spec/(.<em>/</em>)_spec.rb") do |match|
+  WatchrSpecRunner.new.for_spec_file match[0]
+end</p>
+
+<p>watch("lib/(.<em>/.</em>).rb") do |match|
+  WatchrSpecRunner.new.for_lib_file match[1]
+end
+```</p>
+
+<p>where <code>watchr_spec_runner</code> is my tiny class as below:</p>
+
+<p>``` ruby watchr_spec_runner.rb
+class WatchrSpecRunner</p>
+
+<p>  def for_spec_file(file)</p>
+
+<pre><code>run_spec(file)
+</code></pre>
+
+<p>  end</p>
+
+<p>  def for_lib_file(file)</p>
+
+<pre><code>load_lib_file(file)
+run_spec(to_spec(file))
+</code></pre>
+
+<p>  end</p>
+
+<p>  private</p>
+
+<p>  def initialize</p>
+
+<pre><code>@spec_dir = 'spec'
+@lib_dir = 'lib'
+@specs_suffix = '_spec.rb'
+</code></pre>
+
+<p>  end</p>
+
+<p>  def to_spec(file)</p>
+
+<pre><code>"#{@spec_dir}/#{file}#{@specs_suffix}"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def load_lib_file(file)</p>
+
+<pre><code>load "#{@lib_dir}/#{file}.rb"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def run_spec(file)</p>
+
+<pre><code>require 'rspec'
+RSpec.configure do |config|
+  config.color_enabled = true
+  config.tty = true
+end
+begin
+  ::RSpec::Core::Runner.run([file], STDERR, STDOUT)
+rescue Exception =&gt; e
+  STDERR.puts e.message
+  STDERR.puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
+end
+</code></pre>
+
+<p>  end</p>
+
+<p>end</p>
+
+<p>```</p>
+
+<p>Now Watchr startup takes some time (as usual), but then running specs is blazingly fast. Of course provided Watchr configuration together with my <code>WatchrSpecRunner</code> class are dead simple and have just very, very basic funcionality - run spec when file changes. There is a lot more to do e.g. run all specs when going back to green from red phase, etc.</p>
+
+<p>So this is what I came up with when talking about JRuby Vagrant and continuous RSpec run. For complete local development with JRuby I'd probably use Guard as it is more mature, has more features, is actively developed and easier to use.</p>
+
+<p><strong>Guard with RSpec for JRuby note:</strong></p>
+
+<p>There is an implementation of Guard-rspec for JRuby <a href="https://github.com/jkutner/guard-jruby-rspec">here</a>, but currently available version has an quite annoying issue - when you change spec file it "magically" doubles specs number run. <a href="https://github.com/jkutner/guard-jruby-rspec/pull/22">My pull-request</a> with fix for that was already merged, so you may want to use latest version from Github until it is released.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Running Arquillian tests with Maven dependencies in IntelliJ Idea]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/24/arquillian-tests-with-maven-deps-intellij/"/>
+    <updated>2012-10-24T09:01:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/24/arquillian-tests-with-maven-deps-intellij</id>
+    <content type="html"><![CDATA[<p>Arquillian is a big thing. For me it is a revolution in in-container testing. In real world scenarios it is quite common that your JEE components use some libraries, frameworks or other utility classes provided in thirdparty archives. When building project with maven you can make use of <code>pom.xml</code> descriptor and avoid giant amounts of boilerplate code (adding classes and packages of thirdparty libs by hand). I won't dive into details how you can set it up, but the idea is to use <code>MavenDependencyResolver</code> and configure it to read your <code>pom.xml</code>.</p>
+
+<p>``` java Using MavenDependencyResolver</p>
+
+<pre><code>MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class);
+resolver.loadMetadataFromPom("pom.xml");
+...
+// use in ShrinkWrap archive
+</code></pre>
+
+<p>```</p>
+
+<p>This code above works well when run in Eclipse or in command-line Maven, but surprisingly may fail when run from IntelliJ Idea. It complains that <code>pom.xml</code> file cannot be found and read. Some time ago I switched my IDE from Eclipse to IntelliJ Idea and I'm still brand new if it comes to its cofiguration tips and tricks. Quick ShrinkWrap debugging session and it turnes out that IntelliJ invokes tests from <strong>project's dir</strong> instead of <strong>module's dir</strong>. Fortunately I've found a switch for that in IDE.</p>
+
+<h2>There I fixed it</h2>
+
+<p>Go to <strong>Edit Configurations</strong> (under <strong>Run</strong> menu), select <strong>Defaults</strong> branch and then <strong>JUnit</strong>. You can see that <strong>Working directory</strong> is set to project's directory. That's why <code>pom.xml</code> could not be found in this location. Fortunately it can be changed either to <code>MAVEN_REPOSITORY</code> or to <code>MODULE_DIR</code> and the latter is  exactly what you want. Changing that and saving it in defaults makes the issue above disappear.</p>
+
+<p>Now you can run your tests from IntelliJ even if you have maven dependencies to be included in your <code>@Deployment</code> archive.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Even easier FEST assertion generation? Here comes maven plugin for that]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/17/maven-plugin-for-generating-fest-assertions/"/>
+    <updated>2012-10-17T09:18:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/17/maven-plugin-for-generating-fest-assertions</id>
+    <content type="html"><![CDATA[<p>Two posts back, <a href="http://localhost:4000/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot/">here</a> I've described very neat tool for getting your tests (specifically assertions) even more readable. Unfortunately original version this tool is a command-line script and can't be easily linked with build/development process itself.</p>
+
+<p>As I found this tool very useful, I decided to try to give it even more power and spend some time to wrap it in maven plugin. That would allow to link it with regular maven project's lifecycle and have assertions generated on the fly during build process and ready to use immediately. This plugin is now available in Maven Central repo so you can grab it using</p>
+
+<p>``` xml</p>
+
+<pre><code>&lt;groupId&gt;org.easytesting&lt;/groupId&gt;
+&lt;artifactId&gt;maven-fest-assertion-generator-plugin&lt;/artifactId&gt;
+&lt;version&gt;1.0&lt;/version&gt;
+</code></pre>
+
+<p>```</p>
+
+<p>You can also find its sources <a href="https://github.com/joel-costigliola/maven-fest-assertion-generator-plugin">here</a> on github. The repo is hosted on Joel Costigliola's (the author of original generator tool) account in order to have all generator-related stuff in one place, easier to maintain and release.</p>
+
+<p>It's worth saying that there are two important improvements (I also mentioned in previous post) if compared to original previous version of this tool. First of all it generates assertion files in correct package directories structure, so they are ready to use immediately with no tweaks required. The second is that source classes can contain references to other classes from any maven dependency defined in project and they will still have assertions genearated properly. This plugin takes care of loading classes from maven dependencies as well as classes from the project itself. It means you can also generate assertions for classes from your maven dependencies, if required.</p>
+
+<h2>Want to use it?</h2>
+
+<p>First of all it requires FEST assertions in 2.x version, so add the following to your <code>pom.xml</code>:</p>
+
+<p>``` xml</p>
+
+<pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.easytesting&lt;/groupId&gt;
+    &lt;artifactId&gt;fest-assert-core&lt;/artifactId&gt;
+    &lt;version&gt;2.0M8&lt;/version&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>```</p>
+
+<p>Then bind and configure the plugin itself in the <code>&lt;build&gt;</code> section:</p>
+
+<p>``` xml</p>
+
+<pre><code>&lt;plugin&gt;
+    &lt;groupId&gt;org.easytesting&lt;/groupId&gt;
+    &lt;artifactId&gt;maven-fest-assertion-generator-plugin&lt;/artifactId&gt;
+    &lt;version&gt;1.0&lt;/version&gt;
+    &lt;executions&gt;
+        &lt;execution&gt;
+            &lt;goals&gt;
+                &lt;goal&gt;generate-assertions&lt;/goal&gt;
+            &lt;/goals&gt;
+        &lt;/execution&gt;
+    &lt;/executions&gt;
+    &lt;configuration&gt;
+        &lt;packages&gt;
+            &lt;param&gt;your.first.package&lt;/param&gt;
+            &lt;param&gt;your.second.package&lt;/param&gt;
+            ...
+        &lt;/packages&gt;
+    &lt;/configuration&gt;
+&lt;/plugin&gt;
+</code></pre>
+
+<p>```</p>
+
+<p>The plugin can be launched with command <code>mvn generate-test-sources</code> (or simply <code>mvn test</code> as it will be fired before tests are executed) or with any IDE that supports maven. By default, it generates the assertions source files in <code>target/generated-test-sources/assertions</code> as per maven convention (but this can be changed by defining <code>targetDir</code> configuration element).</p>
+
+<p>This is basic version of this plugin. In future versions defining own templates and assertions generation for single classes will probably be supported.</p>
+
+<p>If you spot any issue, feel free to report it or even better - submit a pull request with fix or improvement.</p>
+
+<p>Have a good assertions!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Generate custom FEST-assertion classes with one shot]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot/"/>
+    <updated>2012-10-07T21:13:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot</id>
+    <content type="html"><![CDATA[<p>When writing tests there is a need to write assertions in order to find out whether test should pass or fail. Standard JUnit and TestNG assertions are ok, but they are not very readable, especially when creating more complex conditions. There are two most popular tools that allow write really easy to read assertions in our tests. Those are <a href="https://github.com/hamcrest">Hamcrest</a> and <a href="https://github.com/alexruiz/fest-assert-2.x">FEST Assert</a>. They have slightly different style and I personally prefer the latter and if you haven't used it before, I advise you to grab it and give it a try. I bet you'll fall in love with it if only you take readablity of code you write seriously.
+In short, the main strength of FEST assertions lies in its ability to deliver contextual assertion methods, so for example you can get assertions like <code>isEmpty</code>, <code>hasSize</code>, <code>includes</code> when doing assertion on Collection, and <code>contains</code>, <code>endsWith</code>, <code>matches</code> for String. Using FEST assertions we can write assertions like that:</p>
+
+<p>``` java sample FEST assertions usage</p>
+
+<pre><code>// String
+assertThat(employee.getName()).isEqualTo("John Doe");
+
+// Boolean
+assertThat(employee.isActive()).isTrue();
+
+// Collections
+assertThat(department.getEmployees()).containsOnly(manager);
+</code></pre>
+
+<p>```</p>
+
+<p>But it can be done even better. Say hello to custom assertions:</p>
+
+<p>``` java custom FEST assertions</p>
+
+<p>assertThat(employee).hasName("John Doe");
+assertThat(employee).isActive();</p>
+
+<p>```</p>
+
+<p>Whoaaa! Highly contextual assertions that you can read in almost plain english. The only drawback is that in order to get this you need to write custom assertion class for each of your classes. This is not a rocket science, just write class that extends <code>AbstractAssert</code>, provide assertion methods you want to have, and done. But what if you have several classes to create assertions for? No luck here - still need to write custom assertion class for each of them. Boring, huh? And we, developers are lazy beasts, right? Luckily</p>
+
+<h2>There is a tool for that</h2>
+
+<p>Ruby community has a phrase: <em>"there is a gem for that"</em>. Same here - there is a tool for that. It's called <a href="https://github.com/joel-costigliola/fest-assertion-generator">fest-assertion-generator</a> and can take most of this boring stuff from us. This is command-line tool that you can get as either maven artifact or windows/unix zip archive. It contains executable scripts that fire up generator plus <code>lib/</code> and <code>templates/</code> directories. In order to do the magic you need to put jar file containing classes you want to generate assertions for into <code>lib/</code> directory and fire up this tool with either fully qualified class names (separated by space) or package name as a parameter e.g :</p>
+
+<p>``` text run fest-assertion-generator</p>
+
+<pre><code>./generate.sh pl.michalostruszka.app.Employee pl.michalostruszka.Department
+
+./generate.sh pl.michalostruszka.app
+</code></pre>
+
+<p>```</p>
+
+<p>When done, your custom assertion source files will be waiting for you in the <strong>main directory</strong> of generator. By default they are named like</p>
+
+<p>``` text</p>
+
+<pre><code>&lt;YOUR_CLASS_NAME&gt;Assert
+</code></pre>
+
+<p><code>``
+Just grab them, put into test sources in your project and make use of them. There is also a</code>templates/<code>directory in case you need more control on how it generates those java files. It contains template files with tokens that are replaced with actual names during generation process. However in most cases templates provided should be sufficient as they generate assertions for every public getter your class contain. In addition</code>has elements<code>and</code>has no elements` assertions for arrays and collections are generated.</p>
+
+<p>There are two gotchas however. First of all this tool loads every single class with <code>Class.forName</code> and it must be able to do that with no issues. If your classes use classes from other jars or in general classes that were not provided to this tool it will fail with ugly <code>java.lang.NoClassDefFoundError</code>. So remember to feed this tool with complete classes set. Second thing is that no matter how organized your packages tree is, all generated files will be put into the main directory, so you need to manually rearrange them before use.
+The good news for Eclipse users is that there is a plan to wrap this tool in Eclipse plugin - the project is under active development now.</p>
+
+<p>Personally I find this tool really helpful as it can do the boring stuff for you by generating assertions for classes with public getters like JPA entities or just simple POJOs. If you need specific assertion e.g. provide assertion on multiple fields and give it meaningful name, feel free to add new methods to those classes.
+There are some things that could be improved in future versions, like way it stores generated sources and missing packages structure, but it is certainly "good-to-have" tool in developer's toolbox in my opinion.</p>
+
+<p><strong>Caution</strong>:
+At the time of writing there is 1.0M5 version of this tool which contains bug that prevents you from running this tool. Fully qualified name of main class that fires the process is wrong and results with <code>Could not find or load main class</code>. My tiny pull request with fix for that was already submitted and should be merged soon. For now you can simply <a href="https://github.com/mostr/fest-assertion-generator">clone my fork</a> which has this fix applied, build it with maven and you are good to go.</p>
+]]></content>
+  </entry>
+  
+</feed>

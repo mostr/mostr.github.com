@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>On managing dependencies in javascript build system - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="Every serious project depends on libraries or modules written by other developers. We don&#8217;t want to reinvent the wheel and prefer to use &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2014/05/26/npm-dependencies">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">On managing dependencies in javascript build system</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-26T09:06:00+02:00" pubdate data-updated="true">May 26<span>th</span>, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Every serious project depends on libraries or modules written by other developers. We don&#8217;t want to reinvent the wheel and prefer to use available tried and tested solutions to do our stuff. And here comes dependency management, a way to maintain versions of libraries we use in our projects. It applies to both libraries we use in production application as well as libraries/tools we use to support our development and automation of our workflow. In Javascript there are two most popular ways of handling dependencies: for frontend components there is <a href="http://bower.io">Bower</a> and there is <a href="http://npmjs.org">npm - node packaged modules</a> which is, well&#8230; package manager for node.js. Here is my take on managing dependencies with npm but it describes only developer&#8217;s workflow support. I&#8217;m not gonna talk about Bower or any other way of managing frontend-only components, as well as node.js-based production deployments, maybe some time soon.</p>
+
+<p>In <a href="http://codebrag.com">Codebrag</a> we have completely separated frontend application and use <a href="http://gruntjs.com">GruntJS</a> as a build tool for that. As this is node.js-based tool we also make use of npm to manage all the dependencies (grunt plugins etc). There are basically two approaches I&#8217;ve found so far to handle that in node.js based projects, both of which with their pros and cons:</p>
+
+<ul>
+<li>commit all dependencies into VCS</li>
+<li>rely on <code>package.json</code> file and <code>npm install</code></li>
+</ul>
+
+
+<h2>node_modules - commit or not</h2>
+
+<p>Why would you want to commit all your dependencies to your version control system? It&#8217;d significantly increase your repo size, right? That&#8217;s true, but the most important advantage here is that your application is ready to go immediately after cloning repo. It means you don&#8217;t have to rely on any external repository (be it official npm registry or your local network cache), you just clone your repo and boot up your application - no more <code>npm install</code> required. Looks like pretty cool thing, huh?</p>
+
+<p>Well, I&#8217;m not convinced that much and let me tell you why. I come from java development world where you have tools like Maven, gradle etc. with both central and your local repositories. No dependency is commited to your repository. Sure, it used to be the case years ago when people were not using any standard way of managing dependencies - all libraries your project required were checked into VCS. Also for me it is natural that my project repository contains only this project&#8217;s code without any external dependencies. Another thing is that in case of dependencies being commited to VCS every single change in <code>package.json</code> must be manually handled in repository - clean up unused packages, add new etc. One more reason I don&#8217;t feel this approach is my fav one is that you sometimes depend on packages that are platform-dependent, like phantom-js which has different binaries for different platforms. How would you handle that when your dev platform is different from production one (e.g. Mac and Linux)? Would you commit all possible versions? So as you can see, there is a lot of things to consider when choosing your way. There are discussions around all this &#8220;commit or not&#8221; all over the internet so you can read other people&#8217;s opinions before choosing your own way.</p>
+
+<h2>npm install</h2>
+
+<p>Now let&#8217;s move to the other option which sounds better to me personally. It&#8217;s something I&#8217;m used to and it doesn&#8217;t clutter your project&#8217;s repo with tons of dependencies. You have them all defined in <code>packages.json</code> file and doing simple <code>npm install</code> fetches them for you. After that you are theoretically ready to boot up your application. But that&#8217;s not that easy. While defining version of your dependency you can either put strict version, like <code>1.2.3</code>, or you can say <code>&gt;1.2</code> or even <code>~1.2</code> (which is &#8220;reasonably close to 1.2&#8221;) etc. It means you can define ranges of applicable version. And this is where  things get way more complicated. Say, you depend on module <code>foo</code> in <code>1.0.2</code> version and it in turn depends on module <code>bar</code> in version <code>&gt;2.1.0</code>. You have no control over <code>bar</code> version as it is transitive dependency coming with <code>foo</code>. Whenever <code>bar</code> gets released in new version that satisfies <code>&gt;2.1.0</code> you get this new version, even though you don&#8217;t want that and you haven&#8217;t changed anything in your dependencies. This is where your build may go unstable and where real WTF happens. There are many issues that can bite you there, in <a href="http://codebrag.com">Codebrag</a> we had problems with non existing versions, npm servers returning 403 and so on. All that with no single change in our dependencies. So as you can see, this approach doesn&#8217;t force you to maintain the entire jungle when you only want one banana, but it has its own drawbacks.</p>
+
+<h2>npm shrinkwrap</h2>
+
+<p>So is there any other way to handle that? Yes, there is and it&#8217;s kind of variation of the one above. It&#8217;s called <a href="https://www.npmjs.org/doc/cli/npm-shrinkwrap.html"><code>npm shrinkwrap</code></a>. This tiny feature of <code>npm</code> effectively resolves all the dependencies tree from what is currently installed in <code>node_modules</code> and locks all the versions down. It creates file <code>npm-shrinkwrap.json</code> next to <code>package.json</code> which is used to determine versions while doing subsequent <code>npm install</code> calls. Now (going back to the foo bar example from above) even if new &#8216;bar&#8217; gets released you will not be impacted by this, because you have current version locked and your dependencies tree is always the same. Again this looks like perfect solution - no deps checked into VCS and deterministic versions all the time, yay! Again, not so fast cowboy. Generated file doesn&#8217;t care whether given dependency is production- or dev-related. By default <code>npm shrinkwrap</code> ignores dev dependencies, but you can force it to use them using <code>--dev</code> switch. But this means that doing subsequent <code>npm install</code> your dev dependencies will be also installed on your production environment, so be aware of that.</p>
+
+<h3>Summary</h3>
+
+<p>The above drawback applies only to node.js applications which is not our case. In <a href="http://codebrag.com">Codebrag</a> we use node.js + npm + grunt to automate our workflow so every dependency in our <code>package.json</code> is dev dependency. It means we can safely use <code>npm shrinkwrap --dev</code> to lock down versions of entire dependencies tree. So whenever you choose not to commit your npm dependencies into your VCS, be aware of this versioning gotcha and consider shrinkwrapping your deps. When the only node.js-based code in your application is the one supporting your frontend build system, <code>npm shrinkwrap --dev</code> seems to be perfect fit for you. Just remember that whenever you change anything dependencies-related in <code>package.json</code>, you need to shrinkwrap it again after new package lands in <code>node_modules</code> so new dependency version gets locked down.</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2014/05/26/npm-dependencies/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2014/05/26/npm-dependencies/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2014/05/26/npm-dependencies/';
+        var disqus_url = 'http://mostr.github.com/blog/2014/05/26/npm-dependencies/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: arquillian | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/arquillian/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Running Arquillian tests with Maven dependencies in IntelliJ Idea]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/24/arquillian-tests-with-maven-deps-intellij/"/>
+    <updated>2012-10-24T09:01:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/24/arquillian-tests-with-maven-deps-intellij</id>
+    <content type="html"><![CDATA[<p>Arquillian is a big thing. For me it is a revolution in in-container testing. In real world scenarios it is quite common that your JEE components use some libraries, frameworks or other utility classes provided in thirdparty archives. When building project with maven you can make use of <code>pom.xml</code> descriptor and avoid giant amounts of boilerplate code (adding classes and packages of thirdparty libs by hand). I won't dive into details how you can set it up, but the idea is to use <code>MavenDependencyResolver</code> and configure it to read your <code>pom.xml</code>.</p>
+
+<p>``` java Using MavenDependencyResolver</p>
+
+<pre><code>MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class);
+resolver.loadMetadataFromPom("pom.xml");
+...
+// use in ShrinkWrap archive
+</code></pre>
+
+<p>```</p>
+
+<p>This code above works well when run in Eclipse or in command-line Maven, but surprisingly may fail when run from IntelliJ Idea. It complains that <code>pom.xml</code> file cannot be found and read. Some time ago I switched my IDE from Eclipse to IntelliJ Idea and I'm still brand new if it comes to its cofiguration tips and tricks. Quick ShrinkWrap debugging session and it turnes out that IntelliJ invokes tests from <strong>project's dir</strong> instead of <strong>module's dir</strong>. Fortunately I've found a switch for that in IDE.</p>
+
+<h2>There I fixed it</h2>
+
+<p>Go to <strong>Edit Configurations</strong> (under <strong>Run</strong> menu), select <strong>Defaults</strong> branch and then <strong>JUnit</strong>. You can see that <strong>Working directory</strong> is set to project's directory. That's why <code>pom.xml</code> could not be found in this location. Fortunately it can be changed either to <code>MAVEN_REPOSITORY</code> or to <code>MODULE_DIR</code> and the latter is  exactly what you want. Changing that and saving it in defaults makes the issue above disappear.</p>
+
+<p>Now you can run your tests from IntelliJ even if you have maven dependencies to be included in your <code>@Deployment</code> archive.</p>
+]]></content>
+  </entry>
+  
+</feed>

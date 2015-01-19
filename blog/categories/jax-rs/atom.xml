@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: jax-rs | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/jax-rs/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Quick glance at JAX-RS 2.0 Client API]]></title>
+    <link href="http://mostr.github.com/blog/2013/01/25/jaxrs/"/>
+    <updated>2013-01-25T08:44:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2013/01/25/jaxrs</id>
+    <content type="html"><![CDATA[<p>JAX-RS 2.0 is going to be included in Java EE 7, so I thought I'd play with it a bit to get familiar with what's new there. One thing that is going to be standarized in specification (JSR-399) is Client API.
+Up until now to consume REST or semi-REST (just JSON or XML) web services you could use some non-standarized API of Jersey, CXF, RESTEasy etc or (heaven forbid) roll your own stuff. In this post I'd like to show you how easy it is to consume RESTful services using this standarized API.</p>
+
+<p>First of all, be aware that this API is still in non-final version (currently in Public Review). There are also some inconsistencies between what specification says and what is currently implemented in e.g. reference implementation from Jersey and RESTEasy.</p>
+
+<p>So to begin with I created maven project with only those two dependencies:</p>
+
+<p>``` xml</p>
+
+<!-- well, reference implementation -->
+
+
+<p><dependency></p>
+
+<pre><code>&lt;groupId&gt;org.glassfish.jersey.bundles&lt;/groupId&gt;
+&lt;artifactId&gt;jax-rs-ri&lt;/artifactId&gt;
+&lt;version&gt;2.0-m10&lt;/version&gt;
+</code></pre>
+
+<p></dependency></p>
+
+<!-- jackson dependency as we are going to consume JSON responses -->
+
+
+<p><dependency></p>
+
+<pre><code>&lt;groupId&gt;org.codehaus.jackson&lt;/groupId&gt;
+&lt;artifactId&gt;jackson-jaxrs&lt;/artifactId&gt;
+&lt;version&gt;1.9.9&lt;/version&gt;
+</code></pre>
+
+<p></dependency></p>
+
+<p>```</p>
+
+<p>Let's play with Twitter search for this example. As we don't want to parse response JSON by hand, I'm gonna create the following data structure to let Jackson transform JSON response to. It is very simple class with all-stuff-public for ease of use.</p>
+
+<p>``` java</p>
+
+<p>@JsonIgnoreProperties(ignoreUnknown = true)
+class TwitterSearchResults {</p>
+
+<pre><code>public List&lt;Tweet&gt; results;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public static class Tweet {
+
+    @JsonProperty("from_user")
+    public String user;
+
+    public String text;
+
+}
+</code></pre>
+
+<p>}</p>
+
+<p>```</p>
+
+<p>So how does JAX-RS 2.0 Client API call look like? Actually it's pretty simple, just fire the code below and it will give you <code>TwitterSearchResults</code> object back.</p>
+
+<p>``` java</p>
+
+<p>Client client = ClientFactory.newClient();
+client.configuration().register(JacksonJsonProvider.class);
+TwitterSearchResults response = client</p>
+
+<pre><code>    .target("http://search.twitter.com/search.json")
+    .queryParam("q", "jaxrs")
+    .request("application/json")
+    .get(TwitterSearchResults.class);
+</code></pre>
+
+<p>client.close();</p>
+
+<p>```</p>
+
+<p>This is the simplest form you can use, but there is more stuff to make it even better.
+It is important to keep in mind that creating <code>Client</code> instance is heavyweight and expensive process, so it is advised to keep configured instance of <code>Client</code> around.
+As you can see <code>Client</code> can be configured before use by registering <code>Providers</code>, <code>Filters</code> and <code>Features</code>. Here I'm just registering one provider, <code>JacksonJsonProvider</code> but there may be any number of providers registered. In that case, when client is going to be heavily configured via registering providers and setting some properties it may be better to use <code>Feature</code> instead. So what this <code>Feature</code> is?</p>
+
+<p>``` java</p>
+
+<p>class JsonParsingFeature implements Feature {</p>
+
+<pre><code>@Override
+public boolean configure(Configurable configurable) {
+    configurable.register(JacksonJsonProvider.class);
+    return true;
+}
+</code></pre>
+
+<p>}</p>
+
+<p>```</p>
+
+<p>This is an implementation of <code>Feature</code> interface that gets <code>Configurable</code> and can play with it to register/unregister providers, set properties etc. In current version of specification it is said that <code>Feature</code> must implement <code>enable</code> and <code>disable</code> methods but there is no such thing in both RI and RESTEasy beta implementations. Moreover specification says there should be <code>enableFeature</code> method to include given feature, but in RI it turns out there is just <code>register</code> method instead and in current RESTEasy implementation there is no way to register feature.
+So with this tiny feature implemented we can replace registration of <code>JacksonJsonProvider</code> with registration of <code>JsonParsingFeature</code>. Not a big deal, but imagine heavily customized client - you can split configuration into features and enable/disable them with just one line.</p>
+
+<p><code>Client</code> interface is nice example of fluent interfaces where you can chain methods to get desired result. But it still may seem too low level for some of you, right? Can we encapsulate this client's operation and expose even simpler API? Sure we can, with little help of <code>Invocation</code>.</p>
+
+<p>``` java</p>
+
+<p>// hide all the low-level details from caller
+Invocation invocation = client</p>
+
+<pre><code>    .target("http://search.twitter.com/search.json")
+    .queryParam("q", "jaxrs")
+    .request("application/json")
+    .buildGet();
+</code></pre>
+
+<p>// simply use invocation
+TwitterSearchResults response = invocation.invoke(TwitterSearchResults.class);</p>
+
+<p><code>``
+So that's the basic usage of new JAX-RS 2.0 API. There is more things to cover like registering</code>Filters<code>, creating</code>WebTargets<code>- request templates (with</code>{param}<code>tokens) that can be replaced dynamically. Also</code>async()<code>can be used to make asynchronous request and get</code>Future` instance back for later evaluation.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[RESTEasy resources are CDI-aware in JBoss AS by default]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/31/resteasy-cdi-integration/"/>
+    <updated>2012-10-31T13:29:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/31/resteasy-cdi-integration</id>
+    <content type="html"><![CDATA[<p>JAX-RS and CDI have slightly different scopes so that by default there is no way to mix them and use CDI bean as JAX-RS resource, so <code>@Inject</code> and other CDI magic tools are not available. To get it working you normally need to annotate your class with <code>@RequestScoped</code> like below</p>
+
+<p>``` java BookResource.java</p>
+
+<pre><code>@Path("/book")
+@RequestScoped
+public class BookResource {
+
+    // this will work only when @RequestScoped is present on a class level
+    @Inject
+    private MyService service;
+
+    @GET
+    @Produces("text/plain")
+    public String doSomething() {
+        return service.doSomething();
+    }
+
+}
+</code></pre>
+
+<p>```</p>
+
+<p>So every time you create endpoint you need to write that extra line to switch this CDI magic on.
+Recently when implementing I forgot to put this <code>@RequestScoped</code> thing on my class and guess what? It actually worked fine! I spotted lack of that annotation accidentally some time later when I had all my tests passing and the whole feature working correctly.</p>
+
+<h2>JBoss extras to the rescue</h2>
+
+<p>So I started digging deeper into that. I tried it on two 7.x versions of JBoss AS and on Glassfish 3.1.2.2. It turned out that on Glassfish there is <code>NullPointerException</code> when accessing injected field. So this is what expected. But on both JBoss servers it was all fine with no exception thrown and with work done.</p>
+
+<p>It turns out that JBoss has its own extra module called <code>resteasy-cdi</code> for integration of RESTEasy and CDI that you can read about <a href="http://docs.jboss.org/resteasy/2.0.0.GA/userguide/html/CDI.html">here</a>. TL;DR (from the doc):</p>
+
+<blockquote><p>The resteasy-cdi module is a bridge that allows RESTEasy to work with class instances obtained from the CDI container.
+During a web service invocation, resteasy-cdi asks the CDI container for the managed instance of a JAX-RS component. Then, this instance is passed to RESTEasy (...)
+As a result, CDI services like injection, lifecycle management, events, decoration and interceptor bindings can be used in JAX-RS components.</p></blockquote>
+
+<p>This is a tiny trick that can save you from writing some boilerplate code. It is actually only one line, but shouldn't we apply DRY where possible? Just remember, this is something extra from JBoss and is available only when using RESTEasy with CDI, and that's why Glassfish can't do that.</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: java | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/java/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Quick glance at JAX-RS 2.0 Client API]]></title>
+    <link href="http://mostr.github.com/blog/2013/01/25/jaxrs/"/>
+    <updated>2013-01-25T08:44:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2013/01/25/jaxrs</id>
+    <content type="html"><![CDATA[<p>JAX-RS 2.0 is going to be included in Java EE 7, so I thought I'd play with it a bit to get familiar with what's new there. One thing that is going to be standarized in specification (JSR-399) is Client API.
+Up until now to consume REST or semi-REST (just JSON or XML) web services you could use some non-standarized API of Jersey, CXF, RESTEasy etc or (heaven forbid) roll your own stuff. In this post I'd like to show you how easy it is to consume RESTful services using this standarized API.</p>
+
+<p>First of all, be aware that this API is still in non-final version (currently in Public Review). There are also some inconsistencies between what specification says and what is currently implemented in e.g. reference implementation from Jersey and RESTEasy.</p>
+
+<p>So to begin with I created maven project with only those two dependencies:</p>
+
+<p>``` xml</p>
+
+<!-- well, reference implementation -->
+
+
+<p><dependency></p>
+
+<pre><code>&lt;groupId&gt;org.glassfish.jersey.bundles&lt;/groupId&gt;
+&lt;artifactId&gt;jax-rs-ri&lt;/artifactId&gt;
+&lt;version&gt;2.0-m10&lt;/version&gt;
+</code></pre>
+
+<p></dependency></p>
+
+<!-- jackson dependency as we are going to consume JSON responses -->
+
+
+<p><dependency></p>
+
+<pre><code>&lt;groupId&gt;org.codehaus.jackson&lt;/groupId&gt;
+&lt;artifactId&gt;jackson-jaxrs&lt;/artifactId&gt;
+&lt;version&gt;1.9.9&lt;/version&gt;
+</code></pre>
+
+<p></dependency></p>
+
+<p>```</p>
+
+<p>Let's play with Twitter search for this example. As we don't want to parse response JSON by hand, I'm gonna create the following data structure to let Jackson transform JSON response to. It is very simple class with all-stuff-public for ease of use.</p>
+
+<p>``` java</p>
+
+<p>@JsonIgnoreProperties(ignoreUnknown = true)
+class TwitterSearchResults {</p>
+
+<pre><code>public List&lt;Tweet&gt; results;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public static class Tweet {
+
+    @JsonProperty("from_user")
+    public String user;
+
+    public String text;
+
+}
+</code></pre>
+
+<p>}</p>
+
+<p>```</p>
+
+<p>So how does JAX-RS 2.0 Client API call look like? Actually it's pretty simple, just fire the code below and it will give you <code>TwitterSearchResults</code> object back.</p>
+
+<p>``` java</p>
+
+<p>Client client = ClientFactory.newClient();
+client.configuration().register(JacksonJsonProvider.class);
+TwitterSearchResults response = client</p>
+
+<pre><code>    .target("http://search.twitter.com/search.json")
+    .queryParam("q", "jaxrs")
+    .request("application/json")
+    .get(TwitterSearchResults.class);
+</code></pre>
+
+<p>client.close();</p>
+
+<p>```</p>
+
+<p>This is the simplest form you can use, but there is more stuff to make it even better.
+It is important to keep in mind that creating <code>Client</code> instance is heavyweight and expensive process, so it is advised to keep configured instance of <code>Client</code> around.
+As you can see <code>Client</code> can be configured before use by registering <code>Providers</code>, <code>Filters</code> and <code>Features</code>. Here I'm just registering one provider, <code>JacksonJsonProvider</code> but there may be any number of providers registered. In that case, when client is going to be heavily configured via registering providers and setting some properties it may be better to use <code>Feature</code> instead. So what this <code>Feature</code> is?</p>
+
+<p>``` java</p>
+
+<p>class JsonParsingFeature implements Feature {</p>
+
+<pre><code>@Override
+public boolean configure(Configurable configurable) {
+    configurable.register(JacksonJsonProvider.class);
+    return true;
+}
+</code></pre>
+
+<p>}</p>
+
+<p>```</p>
+
+<p>This is an implementation of <code>Feature</code> interface that gets <code>Configurable</code> and can play with it to register/unregister providers, set properties etc. In current version of specification it is said that <code>Feature</code> must implement <code>enable</code> and <code>disable</code> methods but there is no such thing in both RI and RESTEasy beta implementations. Moreover specification says there should be <code>enableFeature</code> method to include given feature, but in RI it turns out there is just <code>register</code> method instead and in current RESTEasy implementation there is no way to register feature.
+So with this tiny feature implemented we can replace registration of <code>JacksonJsonProvider</code> with registration of <code>JsonParsingFeature</code>. Not a big deal, but imagine heavily customized client - you can split configuration into features and enable/disable them with just one line.</p>
+
+<p><code>Client</code> interface is nice example of fluent interfaces where you can chain methods to get desired result. But it still may seem too low level for some of you, right? Can we encapsulate this client's operation and expose even simpler API? Sure we can, with little help of <code>Invocation</code>.</p>
+
+<p>``` java</p>
+
+<p>// hide all the low-level details from caller
+Invocation invocation = client</p>
+
+<pre><code>    .target("http://search.twitter.com/search.json")
+    .queryParam("q", "jaxrs")
+    .request("application/json")
+    .buildGet();
+</code></pre>
+
+<p>// simply use invocation
+TwitterSearchResults response = invocation.invoke(TwitterSearchResults.class);</p>
+
+<p><code>``
+So that's the basic usage of new JAX-RS 2.0 API. There is more things to cover like registering</code>Filters<code>, creating</code>WebTargets<code>- request templates (with</code>{param}<code>tokens) that can be replaced dynamically. Also</code>async()<code>can be used to make asynchronous request and get</code>Future` instance back for later evaluation.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[RESTEasy resources are CDI-aware in JBoss AS by default]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/31/resteasy-cdi-integration/"/>
+    <updated>2012-10-31T13:29:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/31/resteasy-cdi-integration</id>
+    <content type="html"><![CDATA[<p>JAX-RS and CDI have slightly different scopes so that by default there is no way to mix them and use CDI bean as JAX-RS resource, so <code>@Inject</code> and other CDI magic tools are not available. To get it working you normally need to annotate your class with <code>@RequestScoped</code> like below</p>
+
+<p>``` java BookResource.java</p>
+
+<pre><code>@Path("/book")
+@RequestScoped
+public class BookResource {
+
+    // this will work only when @RequestScoped is present on a class level
+    @Inject
+    private MyService service;
+
+    @GET
+    @Produces("text/plain")
+    public String doSomething() {
+        return service.doSomething();
+    }
+
+}
+</code></pre>
+
+<p>```</p>
+
+<p>So every time you create endpoint you need to write that extra line to switch this CDI magic on.
+Recently when implementing I forgot to put this <code>@RequestScoped</code> thing on my class and guess what? It actually worked fine! I spotted lack of that annotation accidentally some time later when I had all my tests passing and the whole feature working correctly.</p>
+
+<h2>JBoss extras to the rescue</h2>
+
+<p>So I started digging deeper into that. I tried it on two 7.x versions of JBoss AS and on Glassfish 3.1.2.2. It turned out that on Glassfish there is <code>NullPointerException</code> when accessing injected field. So this is what expected. But on both JBoss servers it was all fine with no exception thrown and with work done.</p>
+
+<p>It turns out that JBoss has its own extra module called <code>resteasy-cdi</code> for integration of RESTEasy and CDI that you can read about <a href="http://docs.jboss.org/resteasy/2.0.0.GA/userguide/html/CDI.html">here</a>. TL;DR (from the doc):</p>
+
+<blockquote><p>The resteasy-cdi module is a bridge that allows RESTEasy to work with class instances obtained from the CDI container.
+During a web service invocation, resteasy-cdi asks the CDI container for the managed instance of a JAX-RS component. Then, this instance is passed to RESTEasy (...)
+As a result, CDI services like injection, lifecycle management, events, decoration and interceptor bindings can be used in JAX-RS components.</p></blockquote>
+
+<p>This is a tiny trick that can save you from writing some boilerplate code. It is actually only one line, but shouldn't we apply DRY where possible? Just remember, this is something extra from JBoss and is available only when using RESTEasy with CDI, and that's why Glassfish can't do that.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Running Arquillian tests with Maven dependencies in IntelliJ Idea]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/24/arquillian-tests-with-maven-deps-intellij/"/>
+    <updated>2012-10-24T09:01:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/24/arquillian-tests-with-maven-deps-intellij</id>
+    <content type="html"><![CDATA[<p>Arquillian is a big thing. For me it is a revolution in in-container testing. In real world scenarios it is quite common that your JEE components use some libraries, frameworks or other utility classes provided in thirdparty archives. When building project with maven you can make use of <code>pom.xml</code> descriptor and avoid giant amounts of boilerplate code (adding classes and packages of thirdparty libs by hand). I won't dive into details how you can set it up, but the idea is to use <code>MavenDependencyResolver</code> and configure it to read your <code>pom.xml</code>.</p>
+
+<p>``` java Using MavenDependencyResolver</p>
+
+<pre><code>MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class);
+resolver.loadMetadataFromPom("pom.xml");
+...
+// use in ShrinkWrap archive
+</code></pre>
+
+<p>```</p>
+
+<p>This code above works well when run in Eclipse or in command-line Maven, but surprisingly may fail when run from IntelliJ Idea. It complains that <code>pom.xml</code> file cannot be found and read. Some time ago I switched my IDE from Eclipse to IntelliJ Idea and I'm still brand new if it comes to its cofiguration tips and tricks. Quick ShrinkWrap debugging session and it turnes out that IntelliJ invokes tests from <strong>project's dir</strong> instead of <strong>module's dir</strong>. Fortunately I've found a switch for that in IDE.</p>
+
+<h2>There I fixed it</h2>
+
+<p>Go to <strong>Edit Configurations</strong> (under <strong>Run</strong> menu), select <strong>Defaults</strong> branch and then <strong>JUnit</strong>. You can see that <strong>Working directory</strong> is set to project's directory. That's why <code>pom.xml</code> could not be found in this location. Fortunately it can be changed either to <code>MAVEN_REPOSITORY</code> or to <code>MODULE_DIR</code> and the latter is  exactly what you want. Changing that and saving it in defaults makes the issue above disappear.</p>
+
+<p>Now you can run your tests from IntelliJ even if you have maven dependencies to be included in your <code>@Deployment</code> archive.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Even easier FEST assertion generation? Here comes maven plugin for that]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/17/maven-plugin-for-generating-fest-assertions/"/>
+    <updated>2012-10-17T09:18:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/17/maven-plugin-for-generating-fest-assertions</id>
+    <content type="html"><![CDATA[<p>Two posts back, <a href="http://localhost:4000/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot/">here</a> I've described very neat tool for getting your tests (specifically assertions) even more readable. Unfortunately original version this tool is a command-line script and can't be easily linked with build/development process itself.</p>
+
+<p>As I found this tool very useful, I decided to try to give it even more power and spend some time to wrap it in maven plugin. That would allow to link it with regular maven project's lifecycle and have assertions generated on the fly during build process and ready to use immediately. This plugin is now available in Maven Central repo so you can grab it using</p>
+
+<p>``` xml</p>
+
+<pre><code>&lt;groupId&gt;org.easytesting&lt;/groupId&gt;
+&lt;artifactId&gt;maven-fest-assertion-generator-plugin&lt;/artifactId&gt;
+&lt;version&gt;1.0&lt;/version&gt;
+</code></pre>
+
+<p>```</p>
+
+<p>You can also find its sources <a href="https://github.com/joel-costigliola/maven-fest-assertion-generator-plugin">here</a> on github. The repo is hosted on Joel Costigliola's (the author of original generator tool) account in order to have all generator-related stuff in one place, easier to maintain and release.</p>
+
+<p>It's worth saying that there are two important improvements (I also mentioned in previous post) if compared to original previous version of this tool. First of all it generates assertion files in correct package directories structure, so they are ready to use immediately with no tweaks required. The second is that source classes can contain references to other classes from any maven dependency defined in project and they will still have assertions genearated properly. This plugin takes care of loading classes from maven dependencies as well as classes from the project itself. It means you can also generate assertions for classes from your maven dependencies, if required.</p>
+
+<h2>Want to use it?</h2>
+
+<p>First of all it requires FEST assertions in 2.x version, so add the following to your <code>pom.xml</code>:</p>
+
+<p>``` xml</p>
+
+<pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.easytesting&lt;/groupId&gt;
+    &lt;artifactId&gt;fest-assert-core&lt;/artifactId&gt;
+    &lt;version&gt;2.0M8&lt;/version&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>```</p>
+
+<p>Then bind and configure the plugin itself in the <code>&lt;build&gt;</code> section:</p>
+
+<p>``` xml</p>
+
+<pre><code>&lt;plugin&gt;
+    &lt;groupId&gt;org.easytesting&lt;/groupId&gt;
+    &lt;artifactId&gt;maven-fest-assertion-generator-plugin&lt;/artifactId&gt;
+    &lt;version&gt;1.0&lt;/version&gt;
+    &lt;executions&gt;
+        &lt;execution&gt;
+            &lt;goals&gt;
+                &lt;goal&gt;generate-assertions&lt;/goal&gt;
+            &lt;/goals&gt;
+        &lt;/execution&gt;
+    &lt;/executions&gt;
+    &lt;configuration&gt;
+        &lt;packages&gt;
+            &lt;param&gt;your.first.package&lt;/param&gt;
+            &lt;param&gt;your.second.package&lt;/param&gt;
+            ...
+        &lt;/packages&gt;
+    &lt;/configuration&gt;
+&lt;/plugin&gt;
+</code></pre>
+
+<p>```</p>
+
+<p>The plugin can be launched with command <code>mvn generate-test-sources</code> (or simply <code>mvn test</code> as it will be fired before tests are executed) or with any IDE that supports maven. By default, it generates the assertions source files in <code>target/generated-test-sources/assertions</code> as per maven convention (but this can be changed by defining <code>targetDir</code> configuration element).</p>
+
+<p>This is basic version of this plugin. In future versions defining own templates and assertions generation for single classes will probably be supported.</p>
+
+<p>If you spot any issue, feel free to report it or even better - submit a pull request with fix or improvement.</p>
+
+<p>Have a good assertions!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Generate custom FEST-assertion classes with one shot]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot/"/>
+    <updated>2012-10-07T21:13:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot</id>
+    <content type="html"><![CDATA[<p>When writing tests there is a need to write assertions in order to find out whether test should pass or fail. Standard JUnit and TestNG assertions are ok, but they are not very readable, especially when creating more complex conditions. There are two most popular tools that allow write really easy to read assertions in our tests. Those are <a href="https://github.com/hamcrest">Hamcrest</a> and <a href="https://github.com/alexruiz/fest-assert-2.x">FEST Assert</a>. They have slightly different style and I personally prefer the latter and if you haven't used it before, I advise you to grab it and give it a try. I bet you'll fall in love with it if only you take readablity of code you write seriously.
+In short, the main strength of FEST assertions lies in its ability to deliver contextual assertion methods, so for example you can get assertions like <code>isEmpty</code>, <code>hasSize</code>, <code>includes</code> when doing assertion on Collection, and <code>contains</code>, <code>endsWith</code>, <code>matches</code> for String. Using FEST assertions we can write assertions like that:</p>
+
+<p>``` java sample FEST assertions usage</p>
+
+<pre><code>// String
+assertThat(employee.getName()).isEqualTo("John Doe");
+
+// Boolean
+assertThat(employee.isActive()).isTrue();
+
+// Collections
+assertThat(department.getEmployees()).containsOnly(manager);
+</code></pre>
+
+<p>```</p>
+
+<p>But it can be done even better. Say hello to custom assertions:</p>
+
+<p>``` java custom FEST assertions</p>
+
+<p>assertThat(employee).hasName("John Doe");
+assertThat(employee).isActive();</p>
+
+<p>```</p>
+
+<p>Whoaaa! Highly contextual assertions that you can read in almost plain english. The only drawback is that in order to get this you need to write custom assertion class for each of your classes. This is not a rocket science, just write class that extends <code>AbstractAssert</code>, provide assertion methods you want to have, and done. But what if you have several classes to create assertions for? No luck here - still need to write custom assertion class for each of them. Boring, huh? And we, developers are lazy beasts, right? Luckily</p>
+
+<h2>There is a tool for that</h2>
+
+<p>Ruby community has a phrase: <em>"there is a gem for that"</em>. Same here - there is a tool for that. It's called <a href="https://github.com/joel-costigliola/fest-assertion-generator">fest-assertion-generator</a> and can take most of this boring stuff from us. This is command-line tool that you can get as either maven artifact or windows/unix zip archive. It contains executable scripts that fire up generator plus <code>lib/</code> and <code>templates/</code> directories. In order to do the magic you need to put jar file containing classes you want to generate assertions for into <code>lib/</code> directory and fire up this tool with either fully qualified class names (separated by space) or package name as a parameter e.g :</p>
+
+<p>``` text run fest-assertion-generator</p>
+
+<pre><code>./generate.sh pl.michalostruszka.app.Employee pl.michalostruszka.Department
+
+./generate.sh pl.michalostruszka.app
+</code></pre>
+
+<p>```</p>
+
+<p>When done, your custom assertion source files will be waiting for you in the <strong>main directory</strong> of generator. By default they are named like</p>
+
+<p>``` text</p>
+
+<pre><code>&lt;YOUR_CLASS_NAME&gt;Assert
+</code></pre>
+
+<p><code>``
+Just grab them, put into test sources in your project and make use of them. There is also a</code>templates/<code>directory in case you need more control on how it generates those java files. It contains template files with tokens that are replaced with actual names during generation process. However in most cases templates provided should be sufficient as they generate assertions for every public getter your class contain. In addition</code>has elements<code>and</code>has no elements` assertions for arrays and collections are generated.</p>
+
+<p>There are two gotchas however. First of all this tool loads every single class with <code>Class.forName</code> and it must be able to do that with no issues. If your classes use classes from other jars or in general classes that were not provided to this tool it will fail with ugly <code>java.lang.NoClassDefFoundError</code>. So remember to feed this tool with complete classes set. Second thing is that no matter how organized your packages tree is, all generated files will be put into the main directory, so you need to manually rearrange them before use.
+The good news for Eclipse users is that there is a plan to wrap this tool in Eclipse plugin - the project is under active development now.</p>
+
+<p>Personally I find this tool really helpful as it can do the boring stuff for you by generating assertions for classes with public getters like JPA entities or just simple POJOs. If you need specific assertion e.g. provide assertion on multiple fields and give it meaningful name, feel free to add new methods to those classes.
+There are some things that could be improved in future versions, like way it stores generated sources and missing packages structure, but it is certainly "good-to-have" tool in developer's toolbox in my opinion.</p>
+
+<p><strong>Caution</strong>:
+At the time of writing there is 1.0M5 version of this tool which contains bug that prevents you from running this tool. Fully qualified name of main class that fires the process is wrong and results with <code>Could not find or load main class</code>. My tiny pull request with fix for that was already submitted and should be merged soon. For now you can simply <a href="https://github.com/mostr/fest-assertion-generator">clone my fork</a> which has this fix applied, build it with maven and you are good to go.</p>
+]]></content>
+  </entry>
+  
+</feed>

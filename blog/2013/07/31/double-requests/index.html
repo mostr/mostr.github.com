@@ -1,0 +1,395 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Preventing duplicated requests in AngularJS - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="Note: You can read the same post published on Codebrag blog. You know the case when you hit submit button quickly enough that it sends the form twice &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2013/07/31/double-requests">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">Preventing duplicated requests in AngularJS</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-31T22:12:00+02:00" pubdate data-updated="true">Jul 31<span>st</span>, 2013</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><em>Note: You can read the same post published on <a href="http://blog.codebrag.com/post/57412530001/preventing-duplicated-requests-in-angularjs">Codebrag blog</a>.</em></p>
+
+<p>You know the case when you hit submit button quickly enough that it sends the form twice? Or when you hit submit button and it seems that nothing happens, so you click it once again and another request is being fired? Duplicated requests issue - you can experience it in both traditional web application as well as in modern so-called Single Page Applications. I&#8217;d like to show you how it can be handled in AngularJS and how we did it in <a href="http://codebrag.com">Codebrag</a>.</p>
+
+<p>AngularJS itself has no built-in stuff for that. You can fire as many HTTP requests as you want and it is up to you and your application&#8217;s code to handle it the way that would prevent double form submission. So let&#8217;s see what weapons we are armed with to win this battle.</p>
+
+<h2>Disable button after submit</h2>
+
+<p>Suppose you want to prevent user to double-submit the same form. You can write pretty simple AngularJS directive to disable button when clicked. It will effectively block this button from being pressed again until e.g. response comes back. I personally don&#8217;t really like this one, because you need to remember to put this directive on every form in you application. It looks like violating DRY a bit. So let&#8217;s look for something better.</p>
+
+<h2>Asynchronous UI approach</h2>
+
+<p>This is not a solution to this particular problem per se but more an approach to building web applications. <a href="http://blog.alexmaccaw.com/asynchronous-ui">Alex McCaw</a> has great post about it which I highly recommend reading. Basically the trick is not to wait for server&#8217;s response if it is not absolutely required. Simply act as if action was performed succesfully and immediately do what should be done on success. So let&#8217;s take our form submit example. When user clicks submit button you fire HTTP request as usual and close form (possibly doing something more too, like adding comment to list) without waiting for response from server. It effectively prevents user from resubmitting form as it disappears immediately after button click. Obviously there are some drawbacks too and there are also use-cases (like payments etc) where this approach isn&#8217;t recommended, but in most cases it will work fine. For more details I really recommend reading <a href="http://blog.alexmaccaw.com/asynchronous-ui">Alex&#8217;s post</a>.</p>
+
+<h2>AngularJS-based solution</h2>
+
+<p>Ok but this approach above requires rethinking and possibly changing significant stuff in you application. What if you don&#8217;t really want to do that? It turns out that solution for our initial problem can be quite easily implemented with tooling already available in AngularJS.</p>
+
+<p>What we need to do is to &#8220;intercept&#8221; <code>$http</code> service calls and decide if given request should be sent or not. Angular has concept of http interceptors but only for responses, not for requests (yet). But fear not, we&#8217;ll use decorators. As official doc says</p>
+
+<blockquote><p>Decoration of service, allows the decorator to intercept the service instance creation. The returned instance may be the original instance, or a new instance which delegates to the original instance.</p></blockquote>
+
+<p>and that&#8217;s exactly what we need. So this is how decorator can be applied:</p>
+
+<figure class='code'><figcaption><span>decorator usage</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;app&#39;</span><span class="p">).</span><span class="nx">config</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">$provide</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">$provide</span><span class="p">.</span><span class="nx">decorator</span><span class="p">(</span><span class="s1">&#39;$http&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">$delegate</span><span class="p">,</span> <span class="nx">$q</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="nx">app</span><span class="p">.</span><span class="nx">commons</span><span class="p">.</span><span class="nx">uniqueRequestsAwareHttpService</span><span class="p">(</span><span class="nx">$delegate</span><span class="p">,</span> <span class="nx">$q</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I&#8217;ll show you the details of implementation soon. Next issue to solve is how to determine when requests are identical and if one is already in progress? In the simplest form HTTP requests in AngularJS are done as below:</p>
+
+<figure class='code'><figcaption><span>simple http call</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">config</span> <span class="o">=</span> <span class="p">{</span><span class="nx">method</span><span class="o">:</span> <span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="nx">url</span><span class="o">:</span> <span class="s1">&#39;http://api.myapp.com/comment&#39;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="p">{</span><span class="nx">msg</span><span class="o">:</span> <span class="s1">&#39;foo bar&#39;</span><span class="p">}};</span>
+</span><span class='line'><span class="nx">$http</span><span class="p">(</span><span class="nx">config</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>All other methods like shortcut <code>get</code>, <code>post</code> as well as <code>$resource</code> use this form internally.
+It turns out we can freely add our own properties to this <code>config</code> object. They will help us identify requests. So we can for example modify the config above as follows:</p>
+
+<figure class='code'><figcaption><span>modified config</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">config</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">method</span><span class="o">:</span> <span class="s1">&#39;POST&#39;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">url</span><span class="o">:</span> <span class="s1">&#39;http://api.myapp.com/comment&#39;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">data</span><span class="o">:</span> <span class="p">{</span><span class="nx">msg</span><span class="o">:</span> <span class="s1">&#39;foo bar&#39;</span><span class="p">},</span>
+</span><span class='line'>  <span class="nx">unique</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">requestId</span><span class="o">:</span> <span class="nx">create</span><span class="o">-</span><span class="nx">comment</span><span class="err">&#39;</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This new config contains two new properties <code>unique</code> and <code>requestId</code>. The first one determines if for given types of requests we should check for duplicates or let all of them be sent (we probably can let all GET requests to go through without this check, and have e.g. POSTs checked). The second one, <code>requestId</code> is a property we&#8217;ll match on when looking for duplicates. In this case it has constant value (create-comment) which means that only one POST request to <code>http://api.myapp.com/comment</code> should be pending at any time. This value can be dynamically calculated (e.g. using <code>data</code> for more fine-grained control).</p>
+
+<p>Ok, but how can we find out which requests are currently in progress? <code>$http</code> service has one neat property called <code>pendingRequests</code> which is array of <code>config</code> objects for request that were sent. So matching duplicated requests is just a matter of searching through <code>pendingRequests</code> for request with identical <code>requestId</code> as one in our request we are about to send. So here is first part of implementation:</p>
+
+<figure class='code'><figcaption><span>first implementation   of modified service</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">app</span><span class="p">.</span><span class="nx">commons</span><span class="p">.</span><span class="nx">uniqueRequestsAwareHttpService</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">$http</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">uniqueRequestOptionName</span> <span class="o">=</span> <span class="s2">&quot;unique&quot;</span><span class="p">;</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">requestIdOptionName</span> <span class="o">=</span> <span class="s1">&#39;requestId&#39;</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// should we care about duplicates check</span>
+</span><span class='line'>    <span class="kd">function</span> <span class="nx">checkForDuplicates</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="o">!!</span><span class="nx">requestConfig</span><span class="p">[</span><span class="nx">uniqueRequestOptionName</span><span class="p">];</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// find identical request in pending requests</span>
+</span><span class='line'>    <span class="kd">function</span> <span class="nx">checkIfDuplicated</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">duplicated</span> <span class="o">=</span> <span class="nx">$http</span><span class="p">.</span><span class="nx">pendingRequests</span><span class="p">.</span><span class="nx">filter</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">pendingReqConfig</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="nx">pendingReqConfig</span><span class="p">[</span><span class="nx">requestIdOptionName</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="nx">pendingReqConfig</span><span class="p">[</span><span class="nx">requestIdOptionName</span><span class="p">]</span> <span class="o">===</span> <span class="nx">requestConfig</span><span class="p">[</span><span class="nx">requestIdOptionName</span><span class="p">];</span>
+</span><span class='line'>        <span class="p">});</span>
+</span><span class='line'>        <span class="k">return</span> <span class="nx">duplicated</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">modifiedHttpService</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="c1">// if we need to check for dups and pending found - return</span>
+</span><span class='line'>        <span class="k">if</span><span class="p">(</span><span class="nx">checkForDuplicates</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">checkIfDuplicated</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>            <span class="k">return</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="c1">// otherwise pass requeust to original $http service</span>
+</span><span class='line'>        <span class="k">return</span> <span class="nx">$http</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">modifiedHttpService</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It works fine if you try it, but has one huge drawback. <code>$http</code> service calls return promises so you can attach to them using <code>then</code> function and wait for them to be either resolved or rejected. Our current implementation is not consistent in return types. In fact it returns nothing when duplicate is detected, but returns regular promise when request is passed to original <code>$http</code>. To fix it we need to construct deferred using <code>$q</code> service as below.</p>
+
+<figure class='code'><figcaption><span>returning promise</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">app</span><span class="p">.</span><span class="nx">commons</span><span class="p">.</span><span class="nx">uniqueRequestsAwareHttpService</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">$http</span><span class="p">,</span> <span class="nx">$q</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">DUPLICATED_REQUEST_STATUS_CODE</span> <span class="o">=</span> <span class="mi">499</span><span class="p">;</span> <span class="c1">// I just made it up - nothing special</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">EMPTY_BODY</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">EMPTY_HEADERS</span> <span class="o">=</span> <span class="p">{};</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// previous stuff here</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">function</span> <span class="nx">buildRejectedRequestPromise</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">dfd</span> <span class="o">=</span> <span class="nx">$q</span><span class="p">.</span><span class="nx">defer</span><span class="p">();</span>
+</span><span class='line'>        <span class="c1">// build response for duplicated request</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">response</span> <span class="o">=</span> <span class="p">{</span><span class="nx">data</span><span class="o">:</span> <span class="nx">EMPTY_BODY</span><span class="p">,</span> <span class="nx">headers</span><span class="o">:</span> <span class="nx">EMPTY_HEADERS</span><span class="p">,</span> <span class="nx">status</span><span class="o">:</span> <span class="nx">DUPLICATED_REQUEST_STATUS_CODE</span><span class="p">,</span> <span class="nx">config</span><span class="o">:</span> <span class="nx">requestConfig</span><span class="p">};</span>
+</span><span class='line'>        <span class="nx">console</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s1">&#39;Such request is already in progres, rejecting this one with&#39;</span><span class="p">,</span> <span class="nx">response</span><span class="p">);</span>
+</span><span class='line'>        <span class="c1">// reject promise with response above</span>
+</span><span class='line'>        <span class="nx">dfd</span><span class="p">.</span><span class="nx">reject</span><span class="p">(</span><span class="nx">response</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="nx">dfd</span><span class="p">.</span><span class="nx">promise</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">modifiedHttpService</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span><span class="p">(</span><span class="nx">checkForDuplicates</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">checkIfDuplicated</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>          <span class="c1">// return rejected promise with response consistent with those from $http calls</span>
+</span><span class='line'>            <span class="k">return</span> <span class="nx">buildRejectedRequestPromise</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="nx">$http</span><span class="p">(</span><span class="nx">requestConfig</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">modifiedHttpService</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Done, we have fully working implementation. Just one note, it works only for direct <code>$http</code> calls, if you try to fire <code>$http.get</code> or <code>$http.post</code> or even <code>$resource</code> it won&#8217;t work, because those use shortcut calls defined directly on <code>$http</code>. Fix for that would be to define such functions on our modified version of <code>$http</code> service, but I&#8217;ll leave it to you.</p>
+
+<p>And that&#8217;s all. This is how we solved this in <a href="http://codebrag.com">Codebrag</a> without violating DRY (at least I think so). We have fully working decorator implementation that can prevent duplicated requests from sending. It can be configure separately for every <code>$http</code> request group you define in your application. Just add <code>unique</code> and <code>requestId</code> parameters to request config.</p>
+
+<p>I&#8217;m sure there are other methods for doing this kind of stuff. If you know one, let me know about it in comments below.</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2013/07/31/double-requests/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2013/07/31/double-requests/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2013/07/31/double-requests/';
+        var disqus_url = 'http://mostr.github.com/blog/2013/07/31/double-requests/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

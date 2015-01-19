@@ -1,0 +1,309 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Multiple jQuery sortables in AngularJS - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="Recently for one of my side-projects I was looking for solution that&#8217;d allow user to drag elements from one logical set to another and to &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2012/12/03/sortable-in-angularjs">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">Multiple jQuery sortables in AngularJS</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-03T10:46:00+01:00" pubdate data-updated="true">Dec 3<span>rd</span>, 2012</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Recently for one of my side-projects I was looking for solution that&#8217;d allow user to drag elements from one logical set to another and to reorder them. I knew there was <a href="http://jqueryui.com/sortable/">sortable plugin from jQuery UI </a> that would do the trick. As my application is powered by awesome <a href="http://angularjs.org/">AngularJS</a> I was searching for something similar in AngularJS world (possibly kind of sortable wrapper). It turns out that there is such extension in <a href="https://github.com/angular-ui/angular-ui">angular-ui</a> project that wraps jQuery sortable plugin in AngularJS directive. After several quick&amp;dirty shots and source code inspection I noticed that it has functionality limited to only handling single collection. I could sort/reorder items within one set, but couldn&#8217;t link multiple sets together.</p>
+
+<h2>Here comes ui-multi-sortable directive</h2>
+
+<p>So I decided to try to create something that satisfies those requirements. As a result I came up with <code>ui-multi-sortable</code> directive that you can find <a href="https://github.com/mostr/angular-ui-multi-sortable">here</a>. It is partially based on angular-ui directive mentioned above. I&#8217;ll describe how to use this new directive and what were problems I faced during implementation.</p>
+
+<p>Let&#8217;s start with model definition for this example. Suppose we are building simple taskboard that has two columns: &#8220;To do&#8221; and &#8220;Done&#8221;. Our data model (defined in AngularJS controller) would look like below:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">$scope</span><span class="p">.</span><span class="nx">items</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">todo</span><span class="o">:</span> <span class="p">[</span>
+</span><span class='line'>    <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;todo 1&#39;</span><span class="p">},</span>
+</span><span class='line'>    <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;todo 2&#39;</span><span class="p">},</span>
+</span><span class='line'>    <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;todo 3&#39;</span><span class="p">},</span>
+</span><span class='line'>    <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;todo 4&#39;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">],</span>
+</span><span class='line'>  <span class="nx">done</span><span class="o">:</span> <span class="p">[</span>
+</span><span class='line'>    <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;done 1&#39;</span><span class="p">},</span>
+</span><span class='line'>    <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;done 2&#39;</span><span class="p">},</span>
+</span><span class='line'>  <span class="p">]</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We want our users to be able to grab items from &#8220;To do&#8221; column and move them to &#8220;Done&#8221; column. Obviously we want our underlying model to be in sync with what user does.
+Let&#8217;s define our UI part as simple two-columns layout:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;body</span> <span class="na">ng-controller=</span><span class="s">&quot;TaskboardController&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;div</span> <span class="na">ui-multi-sortable</span> <span class="na">ng-model=</span><span class="s">&quot;items&quot;</span> <span class="na">model-subset=</span><span class="s">&quot;todo&quot;</span> <span class="na">class=</span><span class="s">&quot;column&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;item&quot;</span> <span class="na">ng-repeat=</span><span class="s">&quot;item in items.todo&quot;</span><span class="nt">&gt;</span><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;div</span> <span class="na">ui-multi-sortable</span> <span class="na">ng-model=</span><span class="s">&quot;items&quot;</span> <span class="na">model-subset=</span><span class="s">&quot;done&quot;</span> <span class="na">class=</span><span class="s">&quot;column&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;item&quot;</span> <span class="na">ng-repeat=</span><span class="s">&quot;item in items.done&quot;</span><span class="nt">&gt;</span><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/body&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>As you can see there is <code>ui-multi-sortable</code> directive used instead of <code>ui-sortable</code> one available in angular-ui. As our model isn&#8217;t just plain array of objects (it&#8217;s object containing several arrays of items instead) we need to tell Angular which subset of items should be linked with which sortable element. That&#8217;s what additional <code>model-subset</code> attribute does. It is simply defined as key name under model root. Here <code>items</code> is model root and <code>todo</code> is what contains array of elements to be used in first column.</p>
+
+<p>For each sortable element we need to explicitly tell jQuery what are the others sortables we want to link with. In this case we&#8217;d like to have all elements with class <code>column</code> to be used together. This may be done by providing <code>ui-options</code> attribute for every single column as follows:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>ui-options=&quot;{connectWith: &#39;.column&#39;}&quot;
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is set of options that are passed to underlying jQuery plugin. For more information and available options see jQuery UI sortable API. But that&#8217;s not &#8220;DRY&#8221; enough, right? Instead we can provide global options for sortable in AngularJS like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;ui.config&#39;</span><span class="p">,</span> <span class="p">[]).</span><span class="nx">value</span><span class="p">(</span><span class="s1">&#39;ui.config&#39;</span><span class="p">,</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">sortable</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">connectWith</span><span class="o">:</span> <span class="s1">&#39;.column&#39;</span><span class="p">,</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And that&#8217;s all. You can now move items between those two columns and your underlying model will always stay in sync with UI changes.</p>
+
+<h2>What is the magic behind all that?</h2>
+
+<p>Regarding implementation, the key is in correct underlying model manipulation (either just reorder items if in single sortable, or move items between different sortables). All that is not too difficult, just clever usage of <code>splice</code> on array. The trick is how to hook up all this into right jQuery sortable callbacks sequence.</p>
+
+<p>Standard <code>ui-sortable</code> directive defines <code>start</code> callback that grabs original position of dragged item and <code>update</code> callback to execute actual model manipulation. Unfortunately in case of several related sortables this approach fails because when dragging item between different sortables sequence of events emitted is as follows:</p>
+
+<ul>
+<li><code>start</code> when sorting starts</li>
+<li><code>update</code> on original sortable</li>
+<li><code>remove</code> remove item from original sortable</li>
+<li><code>receive</code> put item being moved in target sortable</li>
+<li><code>update</code> on target sortable</li>
+<li><code>stop</code> when sorting is done</li>
+</ul>
+
+
+<p>The problem here is in two <code>update</code> callbacks being fired.
+First one fired on source sortable and looks as if there was operation of reordering items inside this sortable only (which is clearly not true here as we don&#8217;t want to mess up with model this way). There is no way to get data about target sortable here. The second one is on target sortable, but this one on the other side knows nothing about source sortable and both source and target positions of item. I&#8217;m not sure if this was done that way intentionally, as I can&#8217;t imagine good use case for it. All in all I could see no good way of using <code>update</code> for related sortables. So I decided to split that as below:</p>
+
+<ul>
+<li>use <code>stop</code> to change model when sorting happens within one sortable. Here it is fired only once, on source sortable and has all the data I need just for sorting elements.</li>
+<li>use <code>receive</code> for cross-sortable interactions. It is fired on target sortable and also has all the data to update model.</li>
+</ul>
+
+
+<p>Finally I came up with <code>ModelSynchronizer</code> object which handles all the model updates and encapsulates data required for this update. This is the only place where all the heavy lifting happens. The directive itself only defines set of callbacks which simply invoke corresponding operations on instances of <code>ModelSynchronizer</code> + additional callbacks defined by user.</p>
+
+<p>In case you find it useful, go and grab all the code from <a href="https://github.com/mostr/angular-ui-multi-sortable">here</a>. Pull requests are also welcome.</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2012/12/03/sortable-in-angularjs/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2012/12/03/sortable-in-angularjs/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2012/12/03/sortable-in-angularjs/';
+        var disqus_url = 'http://mostr.github.com/blog/2012/12/03/sortable-in-angularjs/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

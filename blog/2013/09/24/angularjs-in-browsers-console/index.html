@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Access and manipulate AngularJS $scope from browser's console - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="This one&#8217;s gonna be quick. Have you ever wanted to trigger some action in your AngularJS application from browser&#8217;s console? I mean, &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2013/09/24/angularjs-in-browsers-console">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">Access and manipulate AngularJS $scope from browser's console</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-24T12:28:00+02:00" pubdate data-updated="true">Sep 24<span>th</span>, 2013</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This one&#8217;s gonna be quick. Have you ever wanted to trigger some action in your AngularJS application from browser&#8217;s console? I mean, broadcast event (just for development/debug purposes), call functions on <code>$scope</code> or do other stuff? Let&#8217;s see what we can do with it.</p>
+
+<p>Every AngularJS application is bound to exactly one DOM element e.g.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="cp">&lt;!DOCTYPE html&gt;</span>
+</span><span class='line'><span class="nt">&lt;html</span> <span class="na">lang=</span><span class="s">&quot;en&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'><span class="nt">&lt;head&gt;</span>
+</span><span class='line'>  // regular stuff here
+</span><span class='line'><span class="nt">&lt;/head&gt;</span>
+</span><span class='line'><span class="nt">&lt;body</span> <span class="na">ng-app=</span><span class="s">&quot;myApplication&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  // AngularJS stuff here
+</span><span class='line'><span class="nt">&lt;/body&gt;</span>
+</span><span class='line'><span class="nt">&lt;/html&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It also means that every single DOM element within <code>body</code> (in example above) is bound to some instance of <code>Scope</code>. And that&#8217;s all we need - scope we can call functions on, change properties, access <code>$rootScope</code>, broadcast events etc. So let&#8217;s grab this scope to play with it. AngularJS adds some extras to existing jQuery (if loaded) or provides its own jQLite with those extras built-in. One of those extra features is ability to get reference to scope bound to given DOM element. Try it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// in browser&#39;s console</span>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">).</span><span class="nx">scope</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&gt;&gt;</span> <span class="nx">Scope</span> <span class="p">{</span><span class="nx">$id</span><span class="o">:</span> <span class="s2">&quot;002&quot;</span><span class="p">,</span> <span class="nx">$$childTail</span><span class="o">:</span> <span class="nx">Child</span><span class="p">,</span> <span class="nx">$$childHead</span><span class="o">:</span> <span class="nx">Scope</span><span class="p">,</span> <span class="nx">$$prevSibling</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span> <span class="err">…</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Whoaa! Looks like we got scope reference. From now on you can do whatever you need with this scope. Obviously you can grab any DOM element (within AngularJS application), target it with jQuery and get its scope to play with. If you don&#8217;t have full blown jQuery loaded you can still do tricks as above but with using <code>angular.element</code> instead</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">sidebar</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsById</span><span class="p">(</span><span class="s1">&#39;sidebar&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">scope</span> <span class="o">=</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">element</span><span class="p">(</span><span class="nx">sidebar</span><span class="p">).</span><span class="nx">scope</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&gt;&gt;</span> <span class="nx">Scope</span> <span class="p">{</span><span class="nx">$id</span><span class="o">:</span> <span class="s2">&quot;00J&quot;</span><span class="p">,</span> <span class="nx">$$childTail</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span> <span class="nx">$$childHead</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span> <span class="nx">$$prevSibling</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span> <span class="err">…</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>One thing you need to remember about is if you want to fire an action on <code>$scope</code> from outside of AngularJS &#8220;world&#8221;, you need to wrap your stuff in <code>$scope.$apply</code> to let AngularJS know about your changes. So just to recap, fire an event using <code>$rootScope</code> from console would look like below:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// in browser&#39;s console</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">sidebar</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsById</span><span class="p">(</span><span class="s1">&#39;sidebar&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">scope</span> <span class="o">=</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">element</span><span class="p">(</span><span class="nx">sidebar</span><span class="p">).</span><span class="nx">scope</span><span class="p">();</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">rootScope</span> <span class="o">=</span> <span class="nx">scope</span><span class="p">.</span><span class="nx">$root</span><span class="p">;</span>
+</span><span class='line'><span class="nx">scope</span><span class="p">.</span><span class="nx">$apply</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">rootScope</span><span class="p">.</span><span class="nx">$broadcast</span><span class="p">(</span><span class="s1">&#39;myEvent&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">data</span><span class="o">:</span> <span class="nx">myData</span><span class="p">});</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And you should now see your application reacting on this freshly baked event, raised from browser&#8217;s console.</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2013/09/24/angularjs-in-browsers-console/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2013/09/24/angularjs-in-browsers-console/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2013/09/24/angularjs-in-browsers-console/';
+        var disqus_url = 'http://mostr.github.com/blog/2013/09/24/angularjs-in-browsers-console/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

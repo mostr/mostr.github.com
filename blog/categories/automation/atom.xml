@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: automation | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/automation/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Cookbook dependencies in Chef Solo with Librarian]]></title>
+    <link href="http://mostr.github.com/blog/2013/02/20/librarian/"/>
+    <updated>2013-02-20T10:12:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2013/02/20/librarian</id>
+    <content type="html"><![CDATA[<p><em>Disclaimer: I'm just chef-solo newbie and those are my findings after few hours with chef</em></p>
+
+<p>When cooking something non-trivial with chef-solo your cookbooks (or community cookbooks you use) may depend on other cookbooks. For example to use <a href="https://github.com/edelight/chef-mongodb">this</a> <code>mongodb</code> cookbook you need <code>apt</code> and <code>yum</code> cookbooks too. So you need to be sure you have all the dependencies available in place so chef can reach them. It may be real PITA and you know that if you are e.g. java developer and had a chance to work without dependencies management tool and you had to figure out and download all the dependendent jars by hand. But fear not, fortunately "there is a gem for that" that helps you manage cookbooks' dependencies. It is called <a href="https://github.com/applicationsonline/librarian">Librarian</a> and is works like <a href="http://gembundler.com/">Bundler</a> for ruby projects, or like <a href="http://maven.apache.org/">Maven</a> (its dependencies management part) for java projects. It uses its own <code>Cheffile</code> to declare required dependencies. For example to use <code>mongodb</code> cookbook mentioned above you may write the following:</p>
+
+<p><code>ruby Cheffile
+site 'http://community.opscode.com/api/v1'
+cookbook 'mongodb', :git =&gt; https://github.com/edelight/chef-mongodb.git
+</code></p>
+
+<p>Now run <code>librarian-chef install</code> and it will download all the declared cookbooks together with their dependencies to your cookbooks location. In case of the <code>mongodb</code> cookbook it will download this <code>mongodb</code> cookbook itself and <code>apt</code> and <code>yum</code> cookbooks as well.</p>
+
+<p>I recommend you to take a look at <a href="https://github.com/applicationsonline/librarian">Librarian</a> if you haven't used it before as well as get familiar with this whole topic of automated provisioning (no matter what tool you will choose, it's worth spending some time to learn it). I enjoyed it all a lot.</p>
+]]></content>
+  </entry>
+  
+</feed>

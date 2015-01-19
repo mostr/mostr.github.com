@@ -1,0 +1,261 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Generate custom FEST-assertion classes with one shot - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="When writing tests there is a need to write assertions in order to find out whether test should pass or fail. Standard JUnit and TestNG assertions &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">Generate custom FEST-assertion classes with one shot</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-07T21:13:00+02:00" pubdate data-updated="true">Oct 7<span>th</span>, 2012</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>When writing tests there is a need to write assertions in order to find out whether test should pass or fail. Standard JUnit and TestNG assertions are ok, but they are not very readable, especially when creating more complex conditions. There are two most popular tools that allow write really easy to read assertions in our tests. Those are <a href="https://github.com/hamcrest">Hamcrest</a> and <a href="https://github.com/alexruiz/fest-assert-2.x">FEST Assert</a>. They have slightly different style and I personally prefer the latter and if you haven&#8217;t used it before, I advise you to grab it and give it a try. I bet you&#8217;ll fall in love with it if only you take readablity of code you write seriously.
+In short, the main strength of FEST assertions lies in its ability to deliver contextual assertion methods, so for example you can get assertions like <code>isEmpty</code>, <code>hasSize</code>, <code>includes</code> when doing assertion on Collection, and <code>contains</code>, <code>endsWith</code>, <code>matches</code> for String. Using FEST assertions we can write assertions like that:</p>
+
+<figure class='code'><figcaption><span>sample FEST assertions usage</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="c1">// String</span>
+</span><span class='line'><span class="n">assertThat</span><span class="o">(</span><span class="n">employee</span><span class="o">.</span><span class="na">getName</span><span class="o">()).</span><span class="na">isEqualTo</span><span class="o">(</span><span class="s">&quot;John Doe&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Boolean</span>
+</span><span class='line'><span class="n">assertThat</span><span class="o">(</span><span class="n">employee</span><span class="o">.</span><span class="na">isActive</span><span class="o">()).</span><span class="na">isTrue</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Collections</span>
+</span><span class='line'><span class="n">assertThat</span><span class="o">(</span><span class="n">department</span><span class="o">.</span><span class="na">getEmployees</span><span class="o">()).</span><span class="na">containsOnly</span><span class="o">(</span><span class="n">manager</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But it can be done even better. Say hello to custom assertions:</p>
+
+<figure class='code'><figcaption><span>custom FEST assertions</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">assertThat</span><span class="o">(</span><span class="n">employee</span><span class="o">).</span><span class="na">hasName</span><span class="o">(</span><span class="s">&quot;John Doe&quot;</span><span class="o">);</span>
+</span><span class='line'><span class="n">assertThat</span><span class="o">(</span><span class="n">employee</span><span class="o">).</span><span class="na">isActive</span><span class="o">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Whoaaa! Highly contextual assertions that you can read in almost plain english. The only drawback is that in order to get this you need to write custom assertion class for each of your classes. This is not a rocket science, just write class that extends <code>AbstractAssert</code>, provide assertion methods you want to have, and done. But what if you have several classes to create assertions for? No luck here - still need to write custom assertion class for each of them. Boring, huh? And we, developers are lazy beasts, right? Luckily</p>
+
+<h2>There is a tool for that</h2>
+
+<p>Ruby community has a phrase: <em>&#8220;there is a gem for that&#8221;</em>. Same here - there is a tool for that. It&#8217;s called <a href="https://github.com/joel-costigliola/fest-assertion-generator">fest-assertion-generator</a> and can take most of this boring stuff from us. This is command-line tool that you can get as either maven artifact or windows/unix zip archive. It contains executable scripts that fire up generator plus <code>lib/</code> and <code>templates/</code> directories. In order to do the magic you need to put jar file containing classes you want to generate assertions for into <code>lib/</code> directory and fire up this tool with either fully qualified class names (separated by space) or package name as a parameter e.g :</p>
+
+<figure class='code'><figcaption><span>run fest-assertion-generator</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>./generate.sh pl.michalostruszka.app.Employee pl.michalostruszka.Department
+</span><span class='line'>
+</span><span class='line'>./generate.sh pl.michalostruszka.app
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When done, your custom assertion source files will be waiting for you in the <strong>main directory</strong> of generator. By default they are named like</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>&lt;YOUR_CLASS_NAME&gt;Assert
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Just grab them, put into test sources in your project and make use of them. There is also a <code>templates/</code> directory in case you need more control on how it generates those java files. It contains template files with tokens that are replaced with actual names during generation process. However in most cases templates provided should be sufficient as they generate assertions for every public getter your class contain. In addition <code>has elements</code> and <code>has no elements</code> assertions for arrays and collections are generated.</p>
+
+<p>There are two gotchas however. First of all this tool loads every single class with <code>Class.forName</code> and it must be able to do that with no issues. If your classes use classes from other jars or in general classes that were not provided to this tool it will fail with ugly <code>java.lang.NoClassDefFoundError</code>. So remember to feed this tool with complete classes set. Second thing is that no matter how organized your packages tree is, all generated files will be put into the main directory, so you need to manually rearrange them before use.
+The good news for Eclipse users is that there is a plan to wrap this tool in Eclipse plugin - the project is under active development now.</p>
+
+<p>Personally I find this tool really helpful as it can do the boring stuff for you by generating assertions for classes with public getters like JPA entities or just simple POJOs. If you need specific assertion e.g. provide assertion on multiple fields and give it meaningful name, feel free to add new methods to those classes.
+There are some things that could be improved in future versions, like way it stores generated sources and missing packages structure, but it is certainly &#8220;good-to-have&#8221; tool in developer&#8217;s toolbox in my opinion.</p>
+
+<p><strong>Caution</strong>:
+At the time of writing there is 1.0M5 version of this tool which contains bug that prevents you from running this tool. Fully qualified name of main class that fires the process is wrong and results with <code>Could not find or load main class</code>. My tiny pull request with fix for that was already submitted and should be merged soon. For now you can simply <a href="https://github.com/mostr/fest-assertion-generator">clone my fork</a> which has this fix applied, build it with maven and you are good to go.</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot/';
+        var disqus_url = 'http://mostr.github.com/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

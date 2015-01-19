@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: npm | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/npm/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[On managing dependencies in javascript build system]]></title>
+    <link href="http://mostr.github.com/blog/2014/05/26/npm-dependencies/"/>
+    <updated>2014-05-26T09:06:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2014/05/26/npm-dependencies</id>
+    <content type="html"><![CDATA[<p>Every serious project depends on libraries or modules written by other developers. We don't want to reinvent the wheel and prefer to use available tried and tested solutions to do our stuff. And here comes dependency management, a way to maintain versions of libraries we use in our projects. It applies to both libraries we use in production application as well as libraries/tools we use to support our development and automation of our workflow. In Javascript there are two most popular ways of handling dependencies: for frontend components there is <a href="http://bower.io">Bower</a> and there is <a href="http://npmjs.org">npm - node packaged modules</a> which is, well... package manager for node.js. Here is my take on managing dependencies with npm but it describes only developer's workflow support. I'm not gonna talk about Bower or any other way of managing frontend-only components, as well as node.js-based production deployments, maybe some time soon.</p>
+
+<p>In <a href="http://codebrag.com">Codebrag</a> we have completely separated frontend application and use <a href="http://gruntjs.com">GruntJS</a> as a build tool for that. As this is node.js-based tool we also make use of npm to manage all the dependencies (grunt plugins etc). There are basically two approaches I've found so far to handle that in node.js based projects, both of which with their pros and cons:</p>
+
+<ul>
+<li>commit all dependencies into VCS</li>
+<li>rely on <code>package.json</code> file and <code>npm install</code></li>
+</ul>
+
+
+<h2>node_modules - commit or not</h2>
+
+<p>Why would you want to commit all your dependencies to your version control system? It'd significantly increase your repo size, right? That's true, but the most important advantage here is that your application is ready to go immediately after cloning repo. It means you don't have to rely on any external repository (be it official npm registry or your local network cache), you just clone your repo and boot up your application - no more <code>npm install</code> required. Looks like pretty cool thing, huh?</p>
+
+<p>Well, I'm not convinced that much and let me tell you why. I come from java development world where you have tools like Maven, gradle etc. with both central and your local repositories. No dependency is commited to your repository. Sure, it used to be the case years ago when people were not using any standard way of managing dependencies - all libraries your project required were checked into VCS. Also for me it is natural that my project repository contains only this project's code without any external dependencies. Another thing is that in case of dependencies being commited to VCS every single change in <code>package.json</code> must be manually handled in repository - clean up unused packages, add new etc. One more reason I don't feel this approach is my fav one is that you sometimes depend on packages that are platform-dependent, like phantom-js which has different binaries for different platforms. How would you handle that when your dev platform is different from production one (e.g. Mac and Linux)? Would you commit all possible versions? So as you can see, there is a lot of things to consider when choosing your way. There are discussions around all this "commit or not" all over the internet so you can read other people's opinions before choosing your own way.</p>
+
+<h2>npm install</h2>
+
+<p>Now let's move to the other option which sounds better to me personally. It's something I'm used to and it doesn't clutter your project's repo with tons of dependencies. You have them all defined in <code>packages.json</code> file and doing simple <code>npm install</code> fetches them for you. After that you are theoretically ready to boot up your application. But that's not that easy. While defining version of your dependency you can either put strict version, like <code>1.2.3</code>, or you can say <code>&gt;1.2</code> or even <code>~1.2</code> (which is "reasonably close to 1.2") etc. It means you can define ranges of applicable version. And this is where  things get way more complicated. Say, you depend on module <code>foo</code> in <code>1.0.2</code> version and it in turn depends on module <code>bar</code> in version <code>&gt;2.1.0</code>. You have no control over <code>bar</code> version as it is transitive dependency coming with <code>foo</code>. Whenever <code>bar</code> gets released in new version that satisfies <code>&gt;2.1.0</code> you get this new version, even though you don't want that and you haven't changed anything in your dependencies. This is where your build may go unstable and where real WTF happens. There are many issues that can bite you there, in <a href="http://codebrag.com">Codebrag</a> we had problems with non existing versions, npm servers returning 403 and so on. All that with no single change in our dependencies. So as you can see, this approach doesn't force you to maintain the entire jungle when you only want one banana, but it has its own drawbacks.</p>
+
+<h2>npm shrinkwrap</h2>
+
+<p>So is there any other way to handle that? Yes, there is and it's kind of variation of the one above. It's called <a href="https://www.npmjs.org/doc/cli/npm-shrinkwrap.html"><code>npm shrinkwrap</code></a>. This tiny feature of <code>npm</code> effectively resolves all the dependencies tree from what is currently installed in <code>node_modules</code> and locks all the versions down. It creates file <code>npm-shrinkwrap.json</code> next to <code>package.json</code> which is used to determine versions while doing subsequent <code>npm install</code> calls. Now (going back to the foo bar example from above) even if new 'bar' gets released you will not be impacted by this, because you have current version locked and your dependencies tree is always the same. Again this looks like perfect solution - no deps checked into VCS and deterministic versions all the time, yay! Again, not so fast cowboy. Generated file doesn't care whether given dependency is production- or dev-related. By default <code>npm shrinkwrap</code> ignores dev dependencies, but you can force it to use them using <code>--dev</code> switch. But this means that doing subsequent <code>npm install</code> your dev dependencies will be also installed on your production environment, so be aware of that.</p>
+
+<h3>Summary</h3>
+
+<p>The above drawback applies only to node.js applications which is not our case. In <a href="http://codebrag.com">Codebrag</a> we use node.js + npm + grunt to automate our workflow so every dependency in our <code>package.json</code> is dev dependency. It means we can safely use <code>npm shrinkwrap --dev</code> to lock down versions of entire dependencies tree. So whenever you choose not to commit your npm dependencies into your VCS, be aware of this versioning gotcha and consider shrinkwrapping your deps. When the only node.js-based code in your application is the one supporting your frontend build system, <code>npm shrinkwrap --dev</code> seems to be perfect fit for you. Just remember that whenever you change anything dependencies-related in <code>package.json</code>, you need to shrinkwrap it again after new package lands in <code>node_modules</code> so new dependency version gets locked down.</p>
+]]></content>
+  </entry>
+  
+</feed>

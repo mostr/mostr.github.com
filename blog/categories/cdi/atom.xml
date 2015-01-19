@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: cdi | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/cdi/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[RESTEasy resources are CDI-aware in JBoss AS by default]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/31/resteasy-cdi-integration/"/>
+    <updated>2012-10-31T13:29:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/31/resteasy-cdi-integration</id>
+    <content type="html"><![CDATA[<p>JAX-RS and CDI have slightly different scopes so that by default there is no way to mix them and use CDI bean as JAX-RS resource, so <code>@Inject</code> and other CDI magic tools are not available. To get it working you normally need to annotate your class with <code>@RequestScoped</code> like below</p>
+
+<p>``` java BookResource.java</p>
+
+<pre><code>@Path("/book")
+@RequestScoped
+public class BookResource {
+
+    // this will work only when @RequestScoped is present on a class level
+    @Inject
+    private MyService service;
+
+    @GET
+    @Produces("text/plain")
+    public String doSomething() {
+        return service.doSomething();
+    }
+
+}
+</code></pre>
+
+<p>```</p>
+
+<p>So every time you create endpoint you need to write that extra line to switch this CDI magic on.
+Recently when implementing I forgot to put this <code>@RequestScoped</code> thing on my class and guess what? It actually worked fine! I spotted lack of that annotation accidentally some time later when I had all my tests passing and the whole feature working correctly.</p>
+
+<h2>JBoss extras to the rescue</h2>
+
+<p>So I started digging deeper into that. I tried it on two 7.x versions of JBoss AS and on Glassfish 3.1.2.2. It turned out that on Glassfish there is <code>NullPointerException</code> when accessing injected field. So this is what expected. But on both JBoss servers it was all fine with no exception thrown and with work done.</p>
+
+<p>It turns out that JBoss has its own extra module called <code>resteasy-cdi</code> for integration of RESTEasy and CDI that you can read about <a href="http://docs.jboss.org/resteasy/2.0.0.GA/userguide/html/CDI.html">here</a>. TL;DR (from the doc):</p>
+
+<blockquote><p>The resteasy-cdi module is a bridge that allows RESTEasy to work with class instances obtained from the CDI container.
+During a web service invocation, resteasy-cdi asks the CDI container for the managed instance of a JAX-RS component. Then, this instance is passed to RESTEasy (...)
+As a result, CDI services like injection, lifecycle management, events, decoration and interceptor bindings can be used in JAX-RS components.</p></blockquote>
+
+<p>This is a tiny trick that can save you from writing some boilerplate code. It is actually only one line, but shouldn't we apply DRY where possible? Just remember, this is something extra from JBoss and is available only when using RESTEasy with CDI, and that's why Glassfish can't do that.</p>
+]]></content>
+  </entry>
+  
+</feed>

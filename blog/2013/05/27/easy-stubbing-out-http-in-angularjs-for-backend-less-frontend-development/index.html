@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Easy stubbing of HTTP requests in AngularJS for backend-less frontend development - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="Writing single page applications requires HTTP calls to server in order to either get data from or post data to server. In production environment &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2013/05/27/easy-stubbing-out-http-in-angularjs-for-backend-less-frontend-development">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">Easy stubbing of HTTP requests in AngularJS for backend-less frontend development</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-27T23:53:00+02:00" pubdate data-updated="true">May 27<span>th</span>, 2013</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Writing single page applications requires HTTP calls to server in order to either get data from or post data to server. In production environment there is real backend system with its own business logic, persistence etc. But what if we could leave all the backend infrastructure aside when in development mode of client part of application? In fact the only thing we are interested in (when working on client app) is particular response for particular request, not if server logic is implemented correctly. Sure, you can implement corresponding request handler on server and return static data for development needs, but there must be a better way to do that. What if we could stub HTTP requests on client side and leave our full-blown backend server aside completely, even without firing it up?</p>
+
+<p>If you write your browser client using (excellent) <a href="http://angularjs.org">AngularJS</a> framework it&#8217;s pretty easy to do that. First of all Angular has all the low level AJAX-related details encapsulated into <code>$http</code> service (or level up - <code>$resource</code> to deal with world the RESTful way), so it means you usually call server like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">$http</span><span class="p">({</span><span class="nx">method</span><span class="o">:</span> <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="nx">url</span><span class="o">:</span> <span class="s1">&#39;/endpoint&#39;</span><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>and it handles all the underlying HTTP magic for you. It simply calls your server&#8217;s <code>/endpoint</code> address and <code>GET</code>s data from it.</p>
+
+<p><a href="http://angularjs.org">AngularJS</a> is very serious on testing and it already has <code>$httpBackend</code> to simulate requests in unit tests etc., so why not use similar approach in development? Angular provides separate module called <code>ngMockE2E</code> dedicated for end-to-end testing which contains fake <code>$http</code> service definition and it turns out it can be easily used outside tests and serve as backend for your development environment. Angular guys recommend to use it the following way (from their documentation):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">myAppDev</span> <span class="o">=</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;myAppDev&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;myApp&#39;</span><span class="p">,</span> <span class="s1">&#39;ngMockE2E&#39;</span><span class="p">]);</span>
+</span><span class='line'><span class="nx">myAppDev</span><span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">$httpBackend</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// define responses for requests here</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&#8217;s all fine, but there is no easy way to make it work out of the box without tweaking existing code every time you want to enable this stub mode. You still need to modify your <code>ng-app</code> attribute in your <code>index.html</code> file and point it to <code>myAppDev</code> module to be able to bootstrap your application with stubbed backend.</p>
+
+<p>Although there is a way you can make use of this fake backend without modifying your app bootstrap HTML code and this is what we did in <a href="http://codebrag.com">Codebrag</a>. We needed a way to fire up application without backend infrastructure e.g. to let our HTML/CSS wizard to work on application files without setting up all this server stuff etc. or just to work on some frontend without having backend done. So how we did that? That&#8217;s quick&#8217;n&#8217;easy!</p>
+
+<figure class='code'><figcaption><span>httpBackendStub.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// &#39;codebrag&#39; is our main application module</span>
+</span><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;codebrag&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">config</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">$provide</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">$provide</span><span class="p">.</span><span class="nx">decorator</span><span class="p">(</span><span class="s1">&#39;$httpBackend&#39;</span><span class="p">,</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">mock</span><span class="p">.</span><span class="nx">e2e</span><span class="p">.</span><span class="nx">$httpBackendDecorator</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">$httpBackend</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// define responses for requests here as usual</span>
+</span><span class='line'>    <span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Angular lets you define multiple <code>run</code> and <code>config</code> functions for modules so we could use that ability to provide additional configuration and setup of our fake backend besides our regular configuration of <code>codebrag</code> module. Include this file (as well as <code>angular-mocks.js</code> from Angular guys) in your <code>index.html</code> and it will magically make your application using with stubbed backend.</p>
+
+<p>To make it even less obtrusive (at this stage you still need to add/remove this file reference in order to enable/disable stubbed backend) we did the following:</p>
+
+<figure class='code'><figcaption><span>httpBackendStub.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">ng</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nb">document</span><span class="p">.</span><span class="nx">URL</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/\?nobackend$/</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span><span class="p">;</span> <span class="c1">// do nothing special - this app is not gonna use stubbed backend</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;======== ACHTUNG!!! USING STUBBED BACKEND ========&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="nx">initializeStubbedBackend</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">function</span> <span class="nx">initializeStubbedBackend</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// &#39;codebrag&#39; is our main application module</span>
+</span><span class='line'>        <span class="nx">ng</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;codebrag&#39;</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">.</span><span class="nx">config</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">$provide</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>                <span class="nx">$provide</span><span class="p">.</span><span class="nx">decorator</span><span class="p">(</span><span class="s1">&#39;$httpBackend&#39;</span><span class="p">,</span> <span class="nx">angular</span><span class="p">.</span><span class="nx">mock</span><span class="p">.</span><span class="nx">e2e</span><span class="p">.</span><span class="nx">$httpBackendDecorator</span><span class="p">);</span>
+</span><span class='line'>            <span class="p">})</span>
+</span><span class='line'>            <span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">$httpBackend</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>                <span class="c1">// define responses for requests here as usual</span>
+</span><span class='line'>            <span class="p">});</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">})(</span><span class="nx">angular</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here we used some Angular internals to tweak our main module configuration by providing stubbed <code>$http</code> service version. Now you can have <code>httpBackendStub.js</code> file included in your index.html every time when in development (no matter if you want to talk to real server via real HTTP calls or stubbed one) and it&#8217;s just a matter of passing <code>?nobackend</code> parameter when hitting application in your browser&#8217;s address bar when you want to access with &#8220;no server&#8221; mode.</p>
+
+<p>The only thing is you still need to serve your files (html partials, css styles and js scripts) via HTTP server somehow. In production one option is that it may be served from your backend server. Now when you don&#8217;t have backend server up and running you still need simple web server to give you access to your files (due to CORS and security policies in browsers you may not do http requests from <code>file://</code> protocol). But fear not - this is as simple as firing up for example</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>python -m SimpleHTTPServer
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>in the main directory of your application&#8217;s client part. So for example if you are java-being you probably have your web application client stuff in <code>src/main/webapp</code> directory. Just go there and fire the command below. It defaults to port 8000 so you can reach your app under <a href="http://localhost:8080/app_url_here">http://localhost:8080/app_url_here</a>. See? No full blown backend server there and you are still able to work on client side!</p>
+
+<p>One final note - when preparing prod. distribution you can safely exclude this file containing fake backend configuration and definition from the process you use (concat/min/whatever) and your app will happily talk to real server.</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2013/05/27/easy-stubbing-out-http-in-angularjs-for-backend-less-frontend-development/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2013/05/27/easy-stubbing-out-http-in-angularjs-for-backend-less-frontend-development/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2013/05/27/easy-stubbing-out-http-in-angularjs-for-backend-less-frontend-development/';
+        var disqus_url = 'http://mostr.github.com/blog/2013/05/27/easy-stubbing-out-http-in-angularjs-for-backend-less-frontend-development/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

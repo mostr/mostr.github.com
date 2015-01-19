@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: agile | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/agile/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[My notes from first BYOP meetup in Lodz]]></title>
+    <link href="http://mostr.github.com/blog/2012/11/08/first-byop-in-lodz/"/>
+    <updated>2012-11-08T11:56:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2012/11/08/first-byop-in-lodz</id>
+    <content type="html"><![CDATA[<p>First of all what the heck is BYOP? This acronym resolves to <strong>Bring Your Own Problem</strong> and is polish local agile initiative of folks from Code Sprinters. This is set of recurring meetups (they are free of charge) for agile enthusiasts (or those who just want to learn something about it) in different polish cities. Attendees are welcome to bring their own problems they have in organizations, ask questions, exchange ideas or just listen for others agile practitioners. You can read more at <a href="http://byop.pl">byop.pl</a> (site in polish only).</p>
+
+<p>It was very first BYOP meetup organized in Lodz and I was positively surprised with number of attendees. There were 19 of us from different IT companies based in Lodz. Most of the attendees were actively discussing over the whole meeting, but I could spot one or two folks who seemed to be really bored. The whole meeting finished after more than 2,5 hours of hot discussion, what was also a positive surprise for me. I was expecting that we would run out of topics, ideas and people willing to discuss quickly.</p>
+
+<p>So it all started from discussion about team appraisals, bonuses, motivation etc in terms of both development teams as a whole and individual developers and delivering business values. Several real-life examples of appraisal processes and their strenghts and weaknesses in context of whole teams were provided as well as ideas for improvements of current processes. The result of discussion was that it was better to conduct such appraisal processes on the whole team level instead of single developers then tweak the process in exceptional situations and keep away from HR excel forms, points and strict grades. It also turned out that money were not the biggest motivation and introducing transparency within organization might make motivation-related things even better. There was an example of IT company from Bulgaria, where every aspect of their business, from salaries through contracts negotiations and prices to company profits was completely transparent.</p>
+
+<p>Next discussion topic I noticed was about communication and soft skills in developers world. As one said</p>
+
+<blockquote><p>Developers should learn how brain works before they learn how SVN works</p></blockquote>
+
+<p>It is really important to know how to communicate with others and to encourage so called <strong>osmotic communication</strong> within the team, where information is widely accessible and just flows in the air in the team's room. So called <strong>information radiators</strong> are one of the most popular things supporting such model in agile development world. As a part of constant improvement of teams and their work, giving and receiving valuable feedback to others is necessary. It is really hard to do that and some people are simply not brave enough to do that. But as real life examples show after several feedback rounds (occuring every few weeks/months) it gets better and teams can greatly benefit from those feedback sessions. Team members can even stop worrying about giving/receiving immediate feedback. I advise you to read those blog posts of Pawel Brodzinski about feedback: <a href="http://blog.brodzinski.com/2012/08/feedback-culture.html">Feedback Culture</a>, <a href="http://blog.brodzinski.com/2012/04/instant-feedback-culture.html">Instant Feedback</a> and <a href="http://blog.brodzinski.com/2012/07/on-feedback.html">On Feedback</a>.</p>
+
+<p>The next big discussion topic was about role of Project Managers in agile teams. Not all PMs are ok with giving more freedom (and loosing own control) to their teams and they still try to micro-manage to keep this illusion of control. Only small numbers of them can fully understand that their new role during and after agile transformation is to serve the team, to support team's desicions and to push organization in order to give the team what they need. Good Project Manager should be as close to his team as possible, should experience what's happening there. In Lean Manufacturing there is something called <strong>Gemba Walk</strong> which is exactly that. Question: <strong>Does your PM sit together with his team, in the same room?</strong> If not, he is doing it wrong. There was a cite from Roy Osherove who defined three phases of team evolution, where Project Manager (or some kind of leader in general) was required only in first two phases, to manage, show directions and keep things running. His role in last, third phase is just as mentioned above - to help the team do its job, not manage. You can find the full article about it <a href="http://5whys.com/blog/the-3-maturity-stages-of-a-software-team-and-how-scrum-fails.html">here</a>. For some teams where Project Manager can't play well with new model of agile communication and collaboration, teams are forced to build up alternative communication channels bypassing Project Manager and taking over his role (at least partially).</p>
+
+<p>Those are the biggest topics I noticed during the discussion. Besides that there were also following things discussed:</p>
+
+<ul>
+<li>There is no point in teams comparison, teams are different and interactions between team members make it unique</li>
+<li>How to build team: let people create it or just designate people to teams? Which teams perform better?</li>
+<li>Agility in government or other "formality-heavy" institutions</li>
+<li>Agile as just only another buzzword</li>
+<li>Agile transformation is not possible without agile-addicted freaks who can push this process forward</li>
+</ul>
+
+
+<p>To sum up, I found this meetup worth every single minute I spent there. It is always good to hear and learn from others, and to be able to exchange ideas and have background for applying them. The good news is that next BYOP in Lodz is gonna be on <strong>January&nbsp;16,&nbsp;2013</strong>. I really invite you to come and bring your own problem! I hope we can start building kind of active agile community in Lodz. Why not?</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Applying scrum is not about having daily stand-ups]]></title>
+    <link href="http://mostr.github.com/blog/2012/10/05/applying-scrum-is-not-about-having-daily-stand-ups/"/>
+    <updated>2012-10-05T16:42:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2012/10/05/applying-scrum-is-not-about-having-daily-stand-ups</id>
+    <content type="html"><![CDATA[<p>Recently I had a chance to give short introduction to scrum to few new-joiners who have never had a chance to experience it. I started from explaining that it is not a software development method but more like project management framework. I briefly described all those artifacts, roles and events scrum constitutes. Then I started talking about this whole agile idea as a foundation for successful scrum adoption: what it means to "be agile" or have "agile project". There was a lot about communication, transparency, self-management and so on, but also (on a codebase level) about simple design, code quality, best engineering practices and software development principles, automation, testing, code reviews etc. It was all in context of delivering high quality, valuable software. Then I was asked a question:</p>
+
+<h2>Is this all really required by scrum?</h2>
+
+<p>Uhmmm, I could say both: yes and no. <em>No</em>, because it is not part of scrum "definition" by the book. This is theoretically up to you how you fill scrum internals. The only thing scrum says is that you should ship high quality, working software regularly, adapt to changing requirements when new iteration is coming and so on. This is hard and that's why I'd say <em>yes</em>. To have a chance to be successful with scrum implementation (assuming your organization and client is ready and all the prerequisites are satisfied) you must start improving the way you work and start applying the practices above. Otherwise those demanding scrum requirements and unsatisfied rules will start to annoy you and you will start cutting them off. Eventually you'll end up with your <em>"custom scrum"</em> having only stand-ups and few-weeks-long iterations where you just change the code. And that's all. You will still be unable to deliver your work regularly, with high quality. You will still be missing the ability to adapt to new requirements quickly. You will still be seeing this giant spaghetti monster staring at you from your codebase on every change, preventing you from doing your job right.</p>
+
+<p>For me all the roles, events and artifacts scrum introduces are only to help you manage the project not develop code. It is good to know them, and master them, but they don't replace solid engineering practices in any way. If you happen to know project that advertises itself as <em>"using scrum"</em>, ask its members about continuous build, tests, design, release process they have. I know many projects like this which just use "scrum" as a catchy marketing flag only. They are not able to deliver their work with high quality, they struggle with heavy processes, every requirements change takes ages to implement etc. But hey - they <em>"use scrum"</em>: they have stand-ups, iterations and so on. The sad news is it doesn't help. Those who are agile (it maybe scrum incarnation of agility) don't have to wave this "scrum" flag. They just deliver excellent results with excellent way because they can, they focus on that and on improving the way they work.</p>
+
+<p>So to sum up, scrum adoption is not about daily stand-ups and other things you can learn from Scrum Guide etc. They are important but they are only "nice-to-have" tools in your toolbox. They will not work for you if used with no high skills, good habits and engineering practices and principles applied. What's more, you can hurt yourself, screw up the project and end up with well-known:</p>
+
+<blockquote><p>Scrum is a crap. Maybe it works for others, but it doesn't work for us. Our project is very specific.</p></blockquote>
+
+<p>Remember that (following Scrum Guide):</p>
+
+<blockquote><p>Scrum is lightweight, simple to understand and extremely difficult to master.</p></blockquote>
+
+<p>This is because to satisfy its requirements and have this machinery running smooth in right direction you must have high quality internals inside. You need to take care of them, fine-tune and improve them every time. And it is not coincidence that you skills and your attitude to crafting excellent software the right way are significant part of those internals.</p>
+]]></content>
+  </entry>
+  
+</feed>

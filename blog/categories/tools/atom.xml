@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: tools | Hi there, I'm Michal]]></title>
+  <link href="http://mostr.github.com/blog/categories/tools/atom.xml" rel="self"/>
+  <link href="http://mostr.github.com/"/>
+  <updated>2015-01-19T11:18:05+01:00</updated>
+  <id>http://mostr.github.com/</id>
+  <author>
+    <name><![CDATA[Michal Ostruszka]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Web framework is not my application - how I write webapps]]></title>
+    <link href="http://mostr.github.com/blog/2014/11/08/use-cases/"/>
+    <updated>2014-11-08T16:54:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2014/11/08/use-cases</id>
+    <content type="html"><![CDATA[<p>If you write web applications you usually use some kind of web framework, so that means you write either controllers (in terms of full-blown MVC frameworks) or so called route handlers (as people working with Sinatra-like style frameworks call them). They are points of integration where your application meets HTTP and the entire web. As any other piece of code we write, these parts too can be written in different flavors. I'd like to show you my approach to writing web applications and explain why I really don't care whether my application is gonna have HTTP integration or any other (e.g. console-based).</p>
+
+<p>During the last years there were different approaches to writing web apps: put everything in controllers, "skinny controllers, fat models", etc. As the former is clearly wrong it's still not uncommon to see people creating huge monster-controllers, full of spaghetti code and doing all heavy-lifting directly in controllers themselves. Putting entire the logic in models has its own drawbacks (rails community knows both pros and cons of this approach) and I'm not gonna discuss it here.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Scalaval - dead simple Scala validation micro library]]></title>
+    <link href="http://mostr.github.com/blog/2014/07/23/scalaval-simple-scala-validation/"/>
+    <updated>2014-07-23T08:31:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2014/07/23/scalaval-simple-scala-validation</id>
+    <content type="html"><![CDATA[<p>I'm big fan of what I call "lego approach" in software development. It means building project stack using many but small and focused libraries or frameworks where I can tweak every aspect of this project stack. I prefer this over full blown "platforms" which give you everything you <em>may</em> need together with tons of complexity and time required to learn stuff. This "micro libraries" approach is strong in JavaScript, especially node.js community as there are tons of npm modules that are really tiny and do one specific thing so you can compose your stack with number of such modules. The same thing is emerging in Ruby ecosystem, see <a href="http://microrb.com/">microrb.com</a>.</p>
+
+<p>I'm not sure yet how it is in Scala, but it just got one more, new micro library authored by me. This one is called <a href="http://github.com/mostr/scalaval">ScalaVal</a> and aims to help you writing validation in your application. Project's README answers "Why" question pretty well, I think:</p>
+
+<blockquote><p>Because every project bigger than HelloWorldApp requires data validation at some point. Reinventing the structure and validation handling boilerplate every time you need one is definitely not something developers enjoy. I too had this pain when hacking on <a href="http://codebrag.com">Codebrag</a>.</p>
+
+<p>This small utility aims to provide minimal framework to write your validation logic, act as a guard between data and action and collect results in unified way. That's all it does. And it's really, really tiny. No external dependencies and no magic included. Just boilerplate.</p></blockquote>
+
+<p>ScalaVal was just released to Maven Central in 0.1 version and works with Scala 2.10+. For usage examples please consult <a href="http://github.com/mostr/scalaval">projects README</a>, or (even better) see <a href="https://github.com/mostr/scalaval/tree/master/src/test/scala/com/softwaremill/scalaval">project's specs</a>.</p>
+
+<p>Entire source code is one, quite small source file (there is way more test code there). It may look silly to release something like this as full blown open source project, but as I said - I'm in love with micro-libraries approach and I really appreciate that I can take small library like this and it solves me exactly one issue in my project - specifically data validation in this case.</p>
+
+<p>It's my first scala open source thing so I'm pretty excited even if it's just few lines of code. In case you spot any issue PRs are welcome, as well as comments and other ideas.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[On managing dependencies in javascript build system]]></title>
+    <link href="http://mostr.github.com/blog/2014/05/26/npm-dependencies/"/>
+    <updated>2014-05-26T09:06:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2014/05/26/npm-dependencies</id>
+    <content type="html"><![CDATA[<p>Every serious project depends on libraries or modules written by other developers. We don't want to reinvent the wheel and prefer to use available tried and tested solutions to do our stuff. And here comes dependency management, a way to maintain versions of libraries we use in our projects. It applies to both libraries we use in production application as well as libraries/tools we use to support our development and automation of our workflow. In Javascript there are two most popular ways of handling dependencies: for frontend components there is <a href="http://bower.io">Bower</a> and there is <a href="http://npmjs.org">npm - node packaged modules</a> which is, well... package manager for node.js. Here is my take on managing dependencies with npm but it describes only developer's workflow support. I'm not gonna talk about Bower or any other way of managing frontend-only components, as well as node.js-based production deployments, maybe some time soon.</p>
+
+<p>In <a href="http://codebrag.com">Codebrag</a> we have completely separated frontend application and use <a href="http://gruntjs.com">GruntJS</a> as a build tool for that. As this is node.js-based tool we also make use of npm to manage all the dependencies (grunt plugins etc). There are basically two approaches I've found so far to handle that in node.js based projects, both of which with their pros and cons:</p>
+
+<ul>
+<li>commit all dependencies into VCS</li>
+<li>rely on <code>package.json</code> file and <code>npm install</code></li>
+</ul>
+
+
+<h2>node_modules - commit or not</h2>
+
+<p>Why would you want to commit all your dependencies to your version control system? It'd significantly increase your repo size, right? That's true, but the most important advantage here is that your application is ready to go immediately after cloning repo. It means you don't have to rely on any external repository (be it official npm registry or your local network cache), you just clone your repo and boot up your application - no more <code>npm install</code> required. Looks like pretty cool thing, huh?</p>
+
+<p>Well, I'm not convinced that much and let me tell you why. I come from java development world where you have tools like Maven, gradle etc. with both central and your local repositories. No dependency is commited to your repository. Sure, it used to be the case years ago when people were not using any standard way of managing dependencies - all libraries your project required were checked into VCS. Also for me it is natural that my project repository contains only this project's code without any external dependencies. Another thing is that in case of dependencies being commited to VCS every single change in <code>package.json</code> must be manually handled in repository - clean up unused packages, add new etc. One more reason I don't feel this approach is my fav one is that you sometimes depend on packages that are platform-dependent, like phantom-js which has different binaries for different platforms. How would you handle that when your dev platform is different from production one (e.g. Mac and Linux)? Would you commit all possible versions? So as you can see, there is a lot of things to consider when choosing your way. There are discussions around all this "commit or not" all over the internet so you can read other people's opinions before choosing your own way.</p>
+
+<h2>npm install</h2>
+
+<p>Now let's move to the other option which sounds better to me personally. It's something I'm used to and it doesn't clutter your project's repo with tons of dependencies. You have them all defined in <code>packages.json</code> file and doing simple <code>npm install</code> fetches them for you. After that you are theoretically ready to boot up your application. But that's not that easy. While defining version of your dependency you can either put strict version, like <code>1.2.3</code>, or you can say <code>&gt;1.2</code> or even <code>~1.2</code> (which is "reasonably close to 1.2") etc. It means you can define ranges of applicable version. And this is where  things get way more complicated. Say, you depend on module <code>foo</code> in <code>1.0.2</code> version and it in turn depends on module <code>bar</code> in version <code>&gt;2.1.0</code>. You have no control over <code>bar</code> version as it is transitive dependency coming with <code>foo</code>. Whenever <code>bar</code> gets released in new version that satisfies <code>&gt;2.1.0</code> you get this new version, even though you don't want that and you haven't changed anything in your dependencies. This is where your build may go unstable and where real WTF happens. There are many issues that can bite you there, in <a href="http://codebrag.com">Codebrag</a> we had problems with non existing versions, npm servers returning 403 and so on. All that with no single change in our dependencies. So as you can see, this approach doesn't force you to maintain the entire jungle when you only want one banana, but it has its own drawbacks.</p>
+
+<h2>npm shrinkwrap</h2>
+
+<p>So is there any other way to handle that? Yes, there is and it's kind of variation of the one above. It's called <a href="https://www.npmjs.org/doc/cli/npm-shrinkwrap.html"><code>npm shrinkwrap</code></a>. This tiny feature of <code>npm</code> effectively resolves all the dependencies tree from what is currently installed in <code>node_modules</code> and locks all the versions down. It creates file <code>npm-shrinkwrap.json</code> next to <code>package.json</code> which is used to determine versions while doing subsequent <code>npm install</code> calls. Now (going back to the foo bar example from above) even if new 'bar' gets released you will not be impacted by this, because you have current version locked and your dependencies tree is always the same. Again this looks like perfect solution - no deps checked into VCS and deterministic versions all the time, yay! Again, not so fast cowboy. Generated file doesn't care whether given dependency is production- or dev-related. By default <code>npm shrinkwrap</code> ignores dev dependencies, but you can force it to use them using <code>--dev</code> switch. But this means that doing subsequent <code>npm install</code> your dev dependencies will be also installed on your production environment, so be aware of that.</p>
+
+<h3>Summary</h3>
+
+<p>The above drawback applies only to node.js applications which is not our case. In <a href="http://codebrag.com">Codebrag</a> we use node.js + npm + grunt to automate our workflow so every dependency in our <code>package.json</code> is dev dependency. It means we can safely use <code>npm shrinkwrap --dev</code> to lock down versions of entire dependencies tree. So whenever you choose not to commit your npm dependencies into your VCS, be aware of this versioning gotcha and consider shrinkwrapping your deps. When the only node.js-based code in your application is the one supporting your frontend build system, <code>npm shrinkwrap --dev</code> seems to be perfect fit for you. Just remember that whenever you change anything dependencies-related in <code>package.json</code>, you need to shrinkwrap it again after new package lands in <code>node_modules</code> so new dependency version gets locked down.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Selectively run specs or suites in Jasmine]]></title>
+    <link href="http://mostr.github.com/blog/2013/11/06/selective-specs-in-jasmine/"/>
+    <updated>2013-11-06T22:38:00+01:00</updated>
+    <id>http://mostr.github.com/blog/2013/11/06/selective-specs-in-jasmine</id>
+    <content type="html"><![CDATA[<p>I'm sure you write tests for your code. There is no excuse for that, even for Javascript - language which used to be treated as a toy one some time ago. Now Javascript ecosystem changed and its toolbox is full of development tools also those for testing purposes.</p>
+
+<p>One of the most popular testing tools for Javascript is <a href="http://pivotal.github.io/jasmine">Jasmine</a>. It can be run in browser via HTML runner or as a part of automated workflow (which I highly recommend to build for every serious JS app). Sometimes when working on some particular feature, or fixing some stuff you may not want to have all your specs in all suites run every time you touch source file. Suppose you have tons of tests failing (e.g. due to upgrade of some core library) with a lot of errors but you want to focus on just few of them and fix them one by one. It'd be great if there was an ability to let Jasmine know to run only specs you wanted. So how to to it? Looks like there is not much about it in Jasmine documentation. The only thing mentioned is you can disable given suite by changing <code>describe</code> to <code>xdescribe</code> or changing <code>it</code> to <code>xit</code> for single spec. But it'd be silly to disable hundreds of tests that way just to be able to run few others, right?</p>
+
+<p>It turns out that there is much easier way to do that. Let's look at the code below:</p>
+
+<p>``` javascript running single spec
+describe('Your awesome feature' function() {</p>
+
+<p>  it('should do something', function() {</p>
+
+<pre><code>// stuff here
+</code></pre>
+
+<p>  });</p>
+
+<p>  // only this spec will be run
+  iit('should not do something other', function() {</p>
+
+<pre><code>// stuff here
+</code></pre>
+
+<p>  });</p>
+
+<p>});
+```</p>
+
+<p>In the code above changing regular <code>it</code> in second spec definition to <code>iit</code> disables all other tests (in all suites that are about to run) except this one. To run whole suite with several specs in it just change <code>describe</code> to <code>ddescribe</code> and only this suite's specs will be run. There is no need to add <code>iit</code> in every single spec inside. See the code below:</p>
+
+<p>``` javascript running single suite
+// only specs in this suite will be run
+ddescribe('Your awesome feature' function() {</p>
+
+<p>  it('should do something', function() {</p>
+
+<pre><code>// stuff here
+</code></pre>
+
+<p>  });</p>
+
+<p>  it('should not do something other', function() {</p>
+
+<pre><code>// stuff here
+</code></pre>
+
+<p>  });</p>
+
+<p>});
+```</p>
+
+<p>You can mark several specs/suites that way and all of them will be run exclusively. This behavior although not well documented is Jasmine feature and is independent on runner you use to run your tests. I personally use <a href="http://karma-runner.github.io">Karma</a> and it works like a charm.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Continuous, fast Rspec tests with JRuby on Vagrant]]></title>
+    <link href="http://mostr.github.com/blog/2013/04/07/jruby-rspec-vagrant/"/>
+    <updated>2013-04-07T11:12:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2013/04/07/jruby-rspec-vagrant</id>
+    <content type="html"><![CDATA[<p>I don't code in ruby on daily basis but from time to time I jump into ruby world. Most of the times I have my ruby playground on dedicated <a href="http://www.vagrantup.com">Vagrant</a> virtual machine, so I can play with different setups, gems, packages and even if I break something it's just a matter of few Vagrant commands to get my environment back, in stable state. I use JRuby, but playing with JRuby has few well known drawbacks, one of which is startup time. It is even more important when continuous testing, TDD and quick feedback loop is what you believe in and use it all the day while coding. I prefer RSpec as my testing tool of choice in ruby world and there are few solutions to run tests on every change in files. One of them is <a href="https://github.com/guard/guard">Guard</a>. In its RSpec incarnation it runs <code>rspec</code> command every time file is changed. It works excellent on MRI, but is terribly slow on JRuby due to the fact every run of <code>rspec</code> command requires new java process to start (JVM needs to load all its stuff). There is a solution for that (see note at the end of this post), but the core thing with Guard is that it doesn`t play well with Vagrant.</p>
+
+<p>When using Vagrant as a development environment I often have a project folder shared between my localhost and Vagrant VM so that I can write code locally using e.g. SublimeText and run this code as well as its tests on Vagrant machine. The issue with Guard is that it doesn't handle the case when file is being changed remotely. So it looks Guard isn't well suited for setups like mine. Looking for a solution I found another tool called <a href="https://github.com/mynyml/watchr">Watchr</a>. This is quite old gem with no active development (as far as I can see on Github), but does what I need - reacts on remote file changes. The simplest Watchr config to run RSpec may look as follows (for typical ruby project structure with <code>lib</code> and <code>spec</code> folders):</p>
+
+<p><code>`` ruby .watchr
+def run_spec(file)
+  puts "Running specs: #{file}"
+ </code>rspec -c #{file}`
+end</p>
+
+<p>watch("spec/.<em>/</em>_spec.rb") do |match|
+  run_spec match[0]
+end</p>
+
+<p>watch("app/(.<em>/.</em>).rb") do |match|
+  run_spec %{spec/#{match[1]}_spec.rb}
+end
+```</p>
+
+<p>What it does is: it runs <code>rspec</code> on given spec file when either spec file or corresponding lib file was changed. To run it type <code>watchr .watchr</code>. It detects every file change even the remote one but still has this one huge drawback - runs <code>rspec</code> command every time which is terribly slow (JVM startup, ya remember?). It turns out that separate ruby doesn't need to be run every time to run RSpec. RSpec can be run from within existing ruby runtime via <code>RSpec::Core::Runner.run([file], STDERR, STDOUT)</code>. So it means that if Watchr runs its own JRuby runtime to watch for changes, this runtime can be reused to fire up RSpec internally. Let's change Watchr config file definition to look as follows:</p>
+
+<p>``` ruby .watchr
+require './watchr_spec_runner'</p>
+
+<p>watch("spec/(.<em>/</em>)_spec.rb") do |match|
+  WatchrSpecRunner.new.for_spec_file match[0]
+end</p>
+
+<p>watch("lib/(.<em>/.</em>).rb") do |match|
+  WatchrSpecRunner.new.for_lib_file match[1]
+end
+```</p>
+
+<p>where <code>watchr_spec_runner</code> is my tiny class as below:</p>
+
+<p>``` ruby watchr_spec_runner.rb
+class WatchrSpecRunner</p>
+
+<p>  def for_spec_file(file)</p>
+
+<pre><code>run_spec(file)
+</code></pre>
+
+<p>  end</p>
+
+<p>  def for_lib_file(file)</p>
+
+<pre><code>load_lib_file(file)
+run_spec(to_spec(file))
+</code></pre>
+
+<p>  end</p>
+
+<p>  private</p>
+
+<p>  def initialize</p>
+
+<pre><code>@spec_dir = 'spec'
+@lib_dir = 'lib'
+@specs_suffix = '_spec.rb'
+</code></pre>
+
+<p>  end</p>
+
+<p>  def to_spec(file)</p>
+
+<pre><code>"#{@spec_dir}/#{file}#{@specs_suffix}"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def load_lib_file(file)</p>
+
+<pre><code>load "#{@lib_dir}/#{file}.rb"
+</code></pre>
+
+<p>  end</p>
+
+<p>  def run_spec(file)</p>
+
+<pre><code>require 'rspec'
+RSpec.configure do |config|
+  config.color_enabled = true
+  config.tty = true
+end
+begin
+  ::RSpec::Core::Runner.run([file], STDERR, STDOUT)
+rescue Exception =&gt; e
+  STDERR.puts e.message
+  STDERR.puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
+end
+</code></pre>
+
+<p>  end</p>
+
+<p>end</p>
+
+<p>```</p>
+
+<p>Now Watchr startup takes some time (as usual), but then running specs is blazingly fast. Of course provided Watchr configuration together with my <code>WatchrSpecRunner</code> class are dead simple and have just very, very basic funcionality - run spec when file changes. There is a lot more to do e.g. run all specs when going back to green from red phase, etc.</p>
+
+<p>So this is what I came up with when talking about JRuby Vagrant and continuous RSpec run. For complete local development with JRuby I'd probably use Guard as it is more mature, has more features, is actively developed and easier to use.</p>
+
+<p><strong>Guard with RSpec for JRuby note:</strong></p>
+
+<p>There is an implementation of Guard-rspec for JRuby <a href="https://github.com/jkutner/guard-jruby-rspec">here</a>, but currently available version has an quite annoying issue - when you change spec file it "magically" doubles specs number run. <a href="https://github.com/jkutner/guard-jruby-rspec/pull/22">My pull-request</a> with fix for that was already merged, so you may want to use latest version from Github until it is released.</p>
+]]></content>
+  </entry>
+  
+</feed>
