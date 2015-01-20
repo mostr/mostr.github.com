@@ -4,7 +4,7 @@
   <title><![CDATA[Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-01-19T14:44:45+01:00</updated>
+  <updated>2015-01-20T16:27:59+01:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -191,7 +191,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Looks like fairly good way of getting rid of dependencies in directive. Actually it still has one <code>$rootScope</code>, but it&#8217;s not that bad as &#8220;everything&#8221; in Angular is in some scope and technically you could with minimal effort use directive&#8217;s <code>scope</code> instead. But there is one thing that bothers me in this approach: there is no clear concept of messages and messages store. Also there is no clear API saying how it can be used. See? No <code>MessagesStore</code> anywhere, entire well-defined part of the system got blurred somewhere. There is another issue that relates to events in general: if you abuse events and pub/sub in general you&#8217;ll have hard times when reasoning about the code, tracking all the events and their handlers, order of execution etc. It looks like it&#8217;s better in terms of dependencies-coupling, but it has its own problems. So is there a hope? Sure it is (if not why would I write that thing anyway?)</p>
+<p>Looks like fairly good way of getting rid of dependencies in directive. Actually it still has one <code>$rootScope</code>, but it&#8217;s not that bad as &#8220;everything&#8221; in Angular is in some scope and technically you could with minimal effort use directive&#8217;s <code>scope</code> instead. But there is one thing that bothers me in this approach: there is no clear concept of messages and messages store. Also there is no clear API saying how it can be used. See? No <code>MessagesStore</code> anywhere, entire well-defined part of the system got blurred somewhere. Now suppose you need two different notifiers in one application displaying different notifications. You can&#8217;t do that with this evented version shown above. This is because both instances of directive will react on the same event, and will consequently display the same messages. This isn&#8217;t what you want, right? There is another issue that relates to events in general: if you abuse events and pub/sub in general you&#8217;ll have hard times when reasoning about the code, tracking all the events and their handlers, order of execution etc. It looks like it&#8217;s better in terms of dependencies-coupling, but it has its own problems. So is there a hope? Sure it is (if not why would I write that thing anyway?)</p>
 
 <h2>Make it work, then make it right&#8230;</h2>
 
