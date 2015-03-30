@@ -4,7 +4,7 @@
   <title><![CDATA[Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-01-20T16:27:59+01:00</updated>
+  <updated>2015-03-30T20:08:27+02:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -12,6 +12,100 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Scala case classes to and from tuples]]></title>
+    <link href="http://mostr.github.com/blog/2015/03/30/scala-case-classes-to-and-from-tuples/"/>
+    <updated>2015-03-30T18:53:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2015/03/30/scala-case-classes-to-and-from-tuples</id>
+    <content type="html"><![CDATA[<p>This one is going to be pretty quick and it&#8217;s more like note to self, but maybe some of you find if helpful too.</p>
+
+<p>Have you ever had to convert between case classes and tuples in your Scala code? It&#8217;s not something you do every day, all day long but it happens to me from time to time. The worst thing here is I constantly keep forgetting how to do <strong>exactly</strong> this dance and have to look for it in APIs or fallback to Google/Stack Overflow for that. So without further ado, let&#8217;s go to the codes.</p>
+
+<p>There is <code>User</code> case class defined as follows</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">case</span> <span class="k">class</span> <span class="nc">User</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">age</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Say you have a tuple that &#8220;looks like&#8221; <code>User</code>&#8217;s parameters list. It&#8217;d be nice to be able to use <code>User.apply</code> on it, wouldn&#8217;t it?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// this is regular Tuple3</span>
+</span><span class='line'><span class="k">val</span> <span class="n">userLikeData</span> <span class="k">=</span> <span class="o">(</span><span class="s">&quot;John&quot;</span><span class="o">,</span> <span class="s">&quot;john@doe.com&quot;</span><span class="o">,</span> <span class="mi">33</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">val</span> <span class="n">user</span> <span class="k">=</span> <span class="o">(</span><span class="nc">User</span><span class="o">.</span><span class="n">apply</span> <span class="k">_</span><span class="o">).</span><span class="n">tupled</span><span class="o">(</span><span class="n">userLikeData</span><span class="o">)</span>
+</span><span class='line'><span class="c1">// =&gt; User(&quot;John&quot;, &quot;john@doe.com&quot;, 33)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In short it takes <code>User.apply</code> as a function first. On every function (here of type <code>Function3</code>) you can invoke <code>tupled</code> to convert its parameters list to corresponding tuple type. Because it&#8217;s all about <code>Function</code> the example above can also be written as:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="nc">Function</span><span class="o">.</span><span class="n">tupled</span><span class="o">(</span><span class="nc">User</span><span class="o">.</span><span class="n">apply</span> <span class="k">_</span><span class="o">)(</span><span class="n">userLikeData</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ok, let&#8217;s get tuple back out of already created case class instance.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// this is regular User</span>
+</span><span class='line'><span class="k">val</span> <span class="n">user</span> <span class="k">=</span> <span class="nc">User</span><span class="o">(</span><span class="s">&quot;John&quot;</span><span class="o">,</span> <span class="s">&quot;john@doe.com&quot;</span><span class="o">,</span> <span class="mi">33</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nc">User</span><span class="o">.</span><span class="n">unapply</span><span class="o">(</span><span class="n">ben</span><span class="o">).</span><span class="n">get</span>
+</span><span class='line'><span class="c1">// =&gt; (&quot;John&quot;, &quot;john@doe.com&quot;, 33)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And that&#8217;s it. Case classes have <code>unapply</code> which returns <code>Option</code> with tuple inside. Just <code>get</code> from this option to receive plain tuple with user&#8217;s data.</p>
+
+<h2>Bonus points - real classes</h2>
+
+<p>Is above possible with regular classes (not case classes) too? Let&#8217;s see</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">class</span> <span class="nc">Address</span><span class="o">(</span><span class="n">city</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">street</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">number</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We don&#8217;t have any <code>apply</code> here to use (it&#8217;s not real function), but there is good ol&#8217; partial application that we can use:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">addressCtorFn</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Address</span><span class="o">(</span><span class="k">_</span><span class="o">,</span> <span class="k">_</span><span class="o">,</span> <span class="k">_</span><span class="o">)</span>
+</span><span class='line'><span class="c1">// =&gt; (String, String, Int) =&gt; Address</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now we have a function which basically works like <code>Address</code> constructor and already know what to do with it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="nc">Function</span><span class="o">.</span><span class="n">tupled</span><span class="o">(</span><span class="n">addressCtorFn</span><span class="o">)</span>
+</span><span class='line'><span class="c1">// =&gt; ((String, String, Int)) =&gt; Address</span>
+</span><span class='line'><span class="c1">// or simply</span>
+</span><span class='line'><span class="n">addressCtorFn</span><span class="o">.</span><span class="n">tupled</span>
+</span><span class='line'><span class="c1">// =&gt; ((String, String, Int)) =&gt; Address</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And done, now you can build regular <code>Address</code> classes out of tuples (if they match, obviously).</p>
+
+<p>There is no way (at least at my current Scala-fu level) that would allow getting tuples back from regular classes. If it is somehow possible and you know the right lines, just drop me a comment.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[You don't always need AngularJS DI in directives]]></title>
@@ -1884,100 +1978,6 @@ As a result, CDI services like injection, lifecycle management, events, decorati
 <p>Go to <strong>Edit Configurations</strong> (under <strong>Run</strong> menu), select <strong>Defaults</strong> branch and then <strong>JUnit</strong>. You can see that <strong>Working directory</strong> is set to project&#8217;s directory. That&#8217;s why <code>pom.xml</code> could not be found in this location. Fortunately it can be changed either to <code>MAVEN_REPOSITORY</code> or to <code>MODULE_DIR</code> and the latter is  exactly what you want. Changing that and saving it in defaults makes the issue above disappear.</p>
 
 <p>Now you can run your tests from IntelliJ even if you have maven dependencies to be included in your <code>@Deployment</code> archive.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Even easier FEST assertion generation? Here comes maven plugin for that]]></title>
-    <link href="http://mostr.github.com/blog/2012/10/17/maven-plugin-for-generating-fest-assertions/"/>
-    <updated>2012-10-17T09:18:00+02:00</updated>
-    <id>http://mostr.github.com/blog/2012/10/17/maven-plugin-for-generating-fest-assertions</id>
-    <content type="html"><![CDATA[<p>Two posts back, <a href="http://localhost:4000/blog/2012/10/07/generate-custom-fest-assertion-classes-with-one-shot/">here</a> I&#8217;ve described very neat tool for getting your tests (specifically assertions) even more readable. Unfortunately original version this tool is a command-line script and can&#8217;t be easily linked with build/development process itself.</p>
-
-<p>As I found this tool very useful, I decided to try to give it even more power and spend some time to wrap it in maven plugin. That would allow to link it with regular maven project&#8217;s lifecycle and have assertions generated on the fly during build process and ready to use immediately. This plugin is now available in Maven Central repo so you can grab it using</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;groupId&gt;</span>org.easytesting<span class="nt">&lt;/groupId&gt;</span>
-</span><span class='line'><span class="nt">&lt;artifactId&gt;</span>maven-fest-assertion-generator-plugin<span class="nt">&lt;/artifactId&gt;</span>
-</span><span class='line'><span class="nt">&lt;version&gt;</span>1.0<span class="nt">&lt;/version&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>You can also find its sources <a href="https://github.com/joel-costigliola/maven-fest-assertion-generator-plugin">here</a> on github. The repo is hosted on Joel Costigliola&#8217;s (the author of original generator tool) account in order to have all generator-related stuff in one place, easier to maintain and release.</p>
-
-<p>It&#8217;s worth saying that there are two important improvements (I also mentioned in previous post) if compared to original previous version of this tool. First of all it generates assertion files in correct package directories structure, so they are ready to use immediately with no tweaks required. The second is that source classes can contain references to other classes from any maven dependency defined in project and they will still have assertions genearated properly. This plugin takes care of loading classes from maven dependencies as well as classes from the project itself. It means you can also generate assertions for classes from your maven dependencies, if required.</p>
-
-<h2>Want to use it?</h2>
-
-<p>First of all it requires FEST assertions in 2.x version, so add the following to your <code>pom.xml</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;dependency&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;groupId&gt;</span>org.easytesting<span class="nt">&lt;/groupId&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;artifactId&gt;</span>fest-assert-core<span class="nt">&lt;/artifactId&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;version&gt;</span>2.0M8<span class="nt">&lt;/version&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;scope&gt;</span>test<span class="nt">&lt;/scope&gt;</span>
-</span><span class='line'><span class="nt">&lt;/dependency&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Then bind and configure the plugin itself in the <code>&lt;build&gt;</code> section:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;plugin&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;groupId&gt;</span>org.easytesting<span class="nt">&lt;/groupId&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;artifactId&gt;</span>maven-fest-assertion-generator-plugin<span class="nt">&lt;/artifactId&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;version&gt;</span>1.0<span class="nt">&lt;/version&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;executions&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;execution&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;goals&gt;</span>
-</span><span class='line'>                <span class="nt">&lt;goal&gt;</span>generate-assertions<span class="nt">&lt;/goal&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;/goals&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;/execution&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;/executions&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;configuration&gt;</span>
-</span><span class='line'>        <span class="nt">&lt;packages&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;param&gt;</span>your.first.package<span class="nt">&lt;/param&gt;</span>
-</span><span class='line'>            <span class="nt">&lt;param&gt;</span>your.second.package<span class="nt">&lt;/param&gt;</span>
-</span><span class='line'>            ...
-</span><span class='line'>        <span class="nt">&lt;/packages&gt;</span>
-</span><span class='line'>    <span class="nt">&lt;/configuration&gt;</span>
-</span><span class='line'><span class="nt">&lt;/plugin&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The plugin can be launched with command <code>mvn generate-test-sources</code> (or simply <code>mvn test</code> as it will be fired before tests are executed) or with any IDE that supports maven. By default, it generates the assertions source files in <code>target/generated-test-sources/assertions</code> as per maven convention (but this can be changed by defining <code>targetDir</code> configuration element).</p>
-
-<p>This is basic version of this plugin. In future versions defining own templates and assertions generation for single classes will probably be supported.</p>
-
-<p>If you spot any issue, feel free to report it or even better - submit a pull request with fix or improvement.</p>
-
-<p>Have a good assertions!</p>
 ]]></content>
   </entry>
   

@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Scala case classes to and from tuples - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="This one is going to be pretty quick and it&#8217;s more like note to self, but maybe some of you find if helpful too. Have you ever had to convert &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2015/03/30/scala-case-classes-to-and-from-tuples">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">Scala case classes to and from tuples</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-03-30T18:53:00+02:00" pubdate data-updated="true">Mar 30<span>th</span>, 2015</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This one is going to be pretty quick and it&#8217;s more like note to self, but maybe some of you find if helpful too.</p>
+
+<p>Have you ever had to convert between case classes and tuples in your Scala code? It&#8217;s not something you do every day, all day long but it happens to me from time to time. The worst thing here is I constantly keep forgetting how to do <strong>exactly</strong> this dance and have to look for it in APIs or fallback to Google/Stack Overflow for that. So without further ado, let&#8217;s go to the codes.</p>
+
+<p>There is <code>User</code> case class defined as follows</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">case</span> <span class="k">class</span> <span class="nc">User</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">age</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Say you have a tuple that &#8220;looks like&#8221; <code>User</code>&#8217;s parameters list. It&#8217;d be nice to be able to use <code>User.apply</code> on it, wouldn&#8217;t it?</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// this is regular Tuple3</span>
+</span><span class='line'><span class="k">val</span> <span class="n">userLikeData</span> <span class="k">=</span> <span class="o">(</span><span class="s">&quot;John&quot;</span><span class="o">,</span> <span class="s">&quot;john@doe.com&quot;</span><span class="o">,</span> <span class="mi">33</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">val</span> <span class="n">user</span> <span class="k">=</span> <span class="o">(</span><span class="nc">User</span><span class="o">.</span><span class="n">apply</span> <span class="k">_</span><span class="o">).</span><span class="n">tupled</span><span class="o">(</span><span class="n">userLikeData</span><span class="o">)</span>
+</span><span class='line'><span class="c1">// =&gt; User(&quot;John&quot;, &quot;john@doe.com&quot;, 33)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In short it takes <code>User.apply</code> as a function first. On every function (here of type <code>Function3</code>) you can invoke <code>tupled</code> to convert its parameters list to corresponding tuple type. Because it&#8217;s all about <code>Function</code> the example above can also be written as:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="nc">Function</span><span class="o">.</span><span class="n">tupled</span><span class="o">(</span><span class="nc">User</span><span class="o">.</span><span class="n">apply</span> <span class="k">_</span><span class="o">)(</span><span class="n">userLikeData</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Ok, let&#8217;s get tuple back out of already created case class instance.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// this is regular User</span>
+</span><span class='line'><span class="k">val</span> <span class="n">user</span> <span class="k">=</span> <span class="nc">User</span><span class="o">(</span><span class="s">&quot;John&quot;</span><span class="o">,</span> <span class="s">&quot;john@doe.com&quot;</span><span class="o">,</span> <span class="mi">33</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nc">User</span><span class="o">.</span><span class="n">unapply</span><span class="o">(</span><span class="n">ben</span><span class="o">).</span><span class="n">get</span>
+</span><span class='line'><span class="c1">// =&gt; (&quot;John&quot;, &quot;john@doe.com&quot;, 33)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And that&#8217;s it. Case classes have <code>unapply</code> which returns <code>Option</code> with tuple inside. Just <code>get</code> from this option to receive plain tuple with user&#8217;s data.</p>
+
+<h2>Bonus points - real classes</h2>
+
+<p>Is above possible with regular classes (not case classes) too? Let&#8217;s see</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">class</span> <span class="nc">Address</span><span class="o">(</span><span class="n">city</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">street</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">number</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We don&#8217;t have any <code>apply</code> here to use (it&#8217;s not real function), but there is good ol&#8217; partial application that we can use:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">addressCtorFn</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Address</span><span class="o">(</span><span class="k">_</span><span class="o">,</span> <span class="k">_</span><span class="o">,</span> <span class="k">_</span><span class="o">)</span>
+</span><span class='line'><span class="c1">// =&gt; (String, String, Int) =&gt; Address</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now we have a function which basically works like <code>Address</code> constructor and already know what to do with it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="nc">Function</span><span class="o">.</span><span class="n">tupled</span><span class="o">(</span><span class="n">addressCtorFn</span><span class="o">)</span>
+</span><span class='line'><span class="c1">// =&gt; ((String, String, Int)) =&gt; Address</span>
+</span><span class='line'><span class="c1">// or simply</span>
+</span><span class='line'><span class="n">addressCtorFn</span><span class="o">.</span><span class="n">tupled</span>
+</span><span class='line'><span class="c1">// =&gt; ((String, String, Int)) =&gt; Address</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And done, now you can build regular <code>Address</code> classes out of tuples (if they match, obviously).</p>
+
+<p>There is no way (at least at my current Scala-fu level) that would allow getting tuples back from regular classes. If it is somehow possible and you know the right lines, just drop me a comment.</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2015/03/30/scala-case-classes-to-and-from-tuples/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2015/03/30/scala-case-classes-to-and-from-tuples/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2015/03/30/scala-case-classes-to-and-from-tuples/';
+        var disqus_url = 'http://mostr.github.com/blog/2015/03/30/scala-case-classes-to-and-from-tuples/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

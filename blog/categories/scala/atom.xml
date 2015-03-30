@@ -4,7 +4,7 @@
   <title><![CDATA[Category: scala | Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/blog/categories/scala/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-01-20T16:27:59+01:00</updated>
+  <updated>2015-03-30T20:08:27+02:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -12,6 +12,80 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Scala case classes to and from tuples]]></title>
+    <link href="http://mostr.github.com/blog/2015/03/30/scala-case-classes-to-and-from-tuples/"/>
+    <updated>2015-03-30T18:53:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2015/03/30/scala-case-classes-to-and-from-tuples</id>
+    <content type="html"><![CDATA[<p>This one is going to be pretty quick and it's more like note to self, but maybe some of you find if helpful too.</p>
+
+<p>Have you ever had to convert between case classes and tuples in your Scala code? It's not something you do every day, all day long but it happens to me from time to time. The worst thing here is I constantly keep forgetting how to do <strong>exactly</strong> this dance and have to look for it in APIs or fallback to Google/Stack Overflow for that. So without further ado, let's go to the codes.</p>
+
+<p>There is <code>User</code> case class defined as follows</p>
+
+<p><code>scala
+case class User(name: String, email: String, age: Int)
+</code></p>
+
+<p>Say you have a tuple that "looks like" <code>User</code>'s parameters list. It'd be nice to be able to use <code>User.apply</code> on it, wouldn't it?</p>
+
+<p>``` scala
+// this is regular Tuple3
+val userLikeData = ("John", "john@doe.com", 33)</p>
+
+<p>val user = (User.apply _).tupled(userLikeData)
+// => User("John", "john@doe.com", 33)
+```</p>
+
+<p>In short it takes <code>User.apply</code> as a function first. On every function (here of type <code>Function3</code>) you can invoke <code>tupled</code> to convert its parameters list to corresponding tuple type. Because it's all about <code>Function</code> the example above can also be written as:</p>
+
+<p><code>scala
+Function.tupled(User.apply _)(userLikeData)
+</code></p>
+
+<p>Ok, let's get tuple back out of already created case class instance.</p>
+
+<p>``` scala
+// this is regular User
+val user = User("John", "john@doe.com", 33)</p>
+
+<p>User.unapply(ben).get
+// => ("John", "john@doe.com", 33)
+```</p>
+
+<p>And that's it. Case classes have <code>unapply</code> which returns <code>Option</code> with tuple inside. Just <code>get</code> from this option to receive plain tuple with user's data.</p>
+
+<h2>Bonus points - real classes</h2>
+
+<p>Is above possible with regular classes (not case classes) too? Let's see</p>
+
+<p><code>scala
+class Address(city: String, street: String, number: Int)
+</code></p>
+
+<p>We don't have any <code>apply</code> here to use (it's not real function), but there is good ol' partial application that we can use:</p>
+
+<p><code>scala
+val addressCtorFn = new Address(_, _, _)
+// =&gt; (String, String, Int) =&gt; Address
+</code></p>
+
+<p>Now we have a function which basically works like <code>Address</code> constructor and already know what to do with it:</p>
+
+<p><code>scala
+Function.tupled(addressCtorFn)
+// =&gt; ((String, String, Int)) =&gt; Address
+// or simply
+addressCtorFn.tupled
+// =&gt; ((String, String, Int)) =&gt; Address
+</code></p>
+
+<p>And done, now you can build regular <code>Address</code> classes out of tuples (if they match, obviously).</p>
+
+<p>There is no way (at least at my current Scala-fu level) that would allow getting tuples back from regular classes. If it is somehow possible and you know the right lines, just drop me a comment.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Scalaval - dead simple Scala validation micro library]]></title>
