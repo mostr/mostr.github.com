@@ -32,7 +32,13 @@ In short it takes `User.apply` as a function first. On every function (here of t
 Function.tupled(User.apply _)(userLikeData)
 ```
 
-Ok, let's get tuple back out of already created case class instance.
+or even simpler (big thanks to [@kpciesielski](http://twitter.com/kpciesielski) for pointing this out):
+
+``` scala
+User.tupled(userLikeData)
+```
+
+The last one is possible only if `User` doesn't have companion object. Ok, let's get tuple back out of already created case class instance.
 
 ``` scala
 // this is regular User
