@@ -4,7 +4,7 @@
   <title><![CDATA[Category: scala | Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/blog/categories/scala/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-03-30T20:44:38+02:00</updated>
+  <updated>2015-03-30T21:21:28+02:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -44,13 +44,15 @@ val userLikeData = ("John", "john@doe.com", 33)</p>
 Function.tupled(User.apply _)(userLikeData)
 </code></p>
 
-<p>or even simpler (big thanks to <a href="http://twitter.com/kpciesielski">@kpciesielski</a> for pointing this out):</p>
+<p>or even simpler (big thanks to <a href="http://twitter.com/kpciesielski">@kpciesielski</a> and <a href="https://twitter.com/marcin_kubala">@marcin_kubala</a> for pointing this out):</p>
 
 <p><code>scala
 User.tupled(userLikeData)
 </code></p>
 
-<p>The last one is possible only if <code>User</code> doesn't have companion object. Ok, let's get tuple back out of already created case class instance.</p>
+<p>The last one is possible only either if <code>User</code> doesn't have companion object or if companion object extends appropriate <code>FunctionX</code> (here <code>Function3[String, String, Int, User]</code>).</p>
+
+<p>Ok, let's get tuple back out of already created case class instance.</p>
 
 <p>``` scala
 // this is regular User
