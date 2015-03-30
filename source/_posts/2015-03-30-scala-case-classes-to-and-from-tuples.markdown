@@ -32,13 +32,19 @@ In short it takes `User.apply` as a function first. On every function (here of t
 Function.tupled(User.apply _)(userLikeData)
 ```
 
-or even simpler (big thanks to [@kpciesielski](http://twitter.com/kpciesielski) for pointing this out):
+or even simpler:
 
 ``` scala
 User.tupled(userLikeData)
+
+// if companion object exists it must extend FunctionX
+object User extends Function3[String, String, Int, User]
 ```
 
-The last one is possible only if `User` doesn't have companion object. Ok, let's get tuple back out of already created case class instance.
+This one is possible only in two cases: either if `User` doesn't have companion object or if its companion object extends appropriate `FunctionX`. Big thanks to [@kpciesielski](http://twitter.com/kpciesielski) and [@marcin_kubala](https://twitter.com/marcin_kubala) for letting me know about this option.
+
+
+Ok, let's get tuple back out of already created case class instance.
 
 ``` scala
 // this is regular User
