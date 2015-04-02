@@ -50,7 +50,7 @@ Ok, let's get tuple back out of already created case class instance.
 // this is regular User
 val user = User("John", "john@doe.com", 33)
 
-User.unapply(ben).get
+User.unapply(user).get
 // => ("John", "john@doe.com", 33)
 ```
 
