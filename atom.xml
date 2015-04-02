@@ -4,7 +4,7 @@
   <title><![CDATA[Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-03-30T21:27:47+02:00</updated>
+  <updated>2015-04-02T18:16:06+02:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -76,7 +76,7 @@
 </pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// this is regular User</span>
 </span><span class='line'><span class="k">val</span> <span class="n">user</span> <span class="k">=</span> <span class="nc">User</span><span class="o">(</span><span class="s">&quot;John&quot;</span><span class="o">,</span> <span class="s">&quot;john@doe.com&quot;</span><span class="o">,</span> <span class="mi">33</span><span class="o">)</span>
 </span><span class='line'>
-</span><span class='line'><span class="nc">User</span><span class="o">.</span><span class="n">unapply</span><span class="o">(</span><span class="n">ben</span><span class="o">).</span><span class="n">get</span>
+</span><span class='line'><span class="nc">User</span><span class="o">.</span><span class="n">unapply</span><span class="o">(</span><span class="n">user</span><span class="o">).</span><span class="n">get</span>
 </span><span class='line'><span class="c1">// =&gt; (&quot;John&quot;, &quot;john@doe.com&quot;, 33)</span>
 </span></code></pre></td></tr></table></div></figure>
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: scala | Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/blog/categories/scala/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-03-30T21:27:47+02:00</updated>
+  <updated>2015-04-02T18:16:06+02:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -61,7 +61,7 @@ object User extends Function3[String, String, Int, User]
 // this is regular User
 val user = User("John", "john@doe.com", 33)</p>
 
-<p>User.unapply(ben).get
+<p>User.unapply(user).get
 // => ("John", "john@doe.com", 33)
 ```</p>
 
