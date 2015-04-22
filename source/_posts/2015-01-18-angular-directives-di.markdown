@@ -149,7 +149,7 @@ Because every directive's instance lives in some controller's scope, just let co
 ``` javascript
 app.controller('AppCtrl', function($scope, MessagesStore) {
   
-  $scope.store = MessagesStore;  
+  $scope.msgStore = MessagesStore;  
   
 });
 ```
