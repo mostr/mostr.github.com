@@ -1,0 +1,297 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>This AngularJS modules/dependencies thing is a lie - Hi there, I'm Michal</title>
+  <meta name="author" content="Michal Ostruszka">
+
+  
+  <meta name="description" content="Bold statement in the title above, huh? Just stay with me, I&#8217;ll try to make it clear in a minute. This is short story about AngularJS modules &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://mostr.github.com/blog/2015/05/21/angular-dependencies-naming-clash">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Hi there, I'm Michal" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+
+<body>
+	<div class="container">
+		<aside class="left">
+			<div class="inner-left">
+				<header>
+					<img src="http://www.gravatar.com/avatar/3bf8ac59830d9faf75c79c82d62f5776?s=200" alt="Gravatar of Michal Ostruszka " title="Gravatar of Michal Ostruszka" class="profilepic" />
+<hgroup>
+  <h1><a href="/">Hi there, I'm Michal</a></h1>
+  
+    <h2 class="subtitle">I love coding things for web</h2>
+  
+  <h2 class="subtitle"><a href="/about">+</a></h2>
+</hgroup>
+
+
+				</header>
+				<footer>
+					<p>
+	
+		<a href="http://github.com/mostr" class="btn btn-dark">GitHub</a>
+	
+	
+		<a href="http://twitter.com/mostruszka" class="btn btn-dark">Twitter</a>
+	
+</p>
+				</footer>
+			</div>
+		</aside>
+    	<section class="right">
+    		<div class="inner-right">
+    			<div id="posts">
+    			  	<article class="post">
+    
+  <header>
+    
+      <h1 class="entry-title">This AngularJS modules/dependencies thing is a lie</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-05-21T21:52:00+02:00" pubdate data-updated="true">May 21<span>st</span>, 2015</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://mostr.github.com">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Bold statement in the title above, huh? Just stay with me, I&#8217;ll try to make it clear in a minute. This is short story about AngularJS modules that define components and dependencies between these modules. Let&#8217;s write some code first:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// third-party modules</span>
+</span><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;thirdParty1&#39;</span><span class="p">,</span> <span class="p">[]).</span><span class="nx">factory</span><span class="p">(</span><span class="s1">&#39;hello&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="s1">&#39;hello world&#39;</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;thirdParty2&#39;</span><span class="p">,</span> <span class="p">[]).</span><span class="nx">factory</span><span class="p">(</span><span class="s1">&#39;hello&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="s1">&#39;hi there&#39;</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// &quot;own&quot; modules</span>
+</span><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;own1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;thirdParty1&#39;</span><span class="p">]).</span><span class="nx">controller</span><span class="p">(</span><span class="s1">&#39;Own1Ctrl&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">hello</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">greet</span> <span class="o">=</span> <span class="nx">hello</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;own2&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;thirdParty2&#39;</span><span class="p">]).</span><span class="nx">controller</span><span class="p">(</span><span class="s1">&#39;Own2Ctrl&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">hello</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">greet</span> <span class="o">=</span> <span class="nx">hello</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;app&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;own1&#39;</span><span class="p">,</span> <span class="s1">&#39;own2&#39;</span><span class="p">]);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And some view for that:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;body</span> <span class="na">ng-app=</span><span class="s">&quot;app&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">ng-controller=</span><span class="s">&quot;Own1Ctrl as own1&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    OwnCtrl1: {{ own1.greet }}
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">ng-controller=</span><span class="s">&quot;Own2Ctrl as own2&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    OwnCtrl2: {{ own2.greet }}
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/body&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This above is your application: you own (control) modules <code>own1</code> and <code>own2</code> and obviously the <code>app</code> one. There are also two other modules you depend on <code>thirdParty1</code> and <code>thirdParty2</code>. It happens that both third party modules define factories with the same name (but they both do different things). Your modules depend on these third party ones: <code>own1</code> depends on <code>thirdParty1</code> and <code>own2</code> depends on <code>thirdParty2</code>. Finally, your <code>app</code> depends on both of your modules. Simple. Now the fun part and question to you:</p>
+
+<h2>What do you think will be displayed?</h2>
+
+<p>Come on, this can&#8217;t be hard. <code>Own1Ctrl</code> is defined in <code>own1</code> module that depends on <code>thirdParty1</code> which in turn defines <code>hello</code> factory as returning &#8220;hello world&#8221;. Same with <code>Own2Ctrl</code>, depends on <code>thirdParty2</code> with &#8220;hi there&#8221;. So I&#8217;d bet like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>OwnCtrl1: hello world
+</span><span class='line'>OwnCtrl2: hi there
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you are like me and the above looks pretty logical to you, you&#8217;ve just failed. The answer is</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>OwnCtrl1: hi there
+</span><span class='line'>OwnCtrl2: hi there
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>WAT?</h2>
+
+<p>It turns out AngularJS doesn&#8217;t really care where it takes things to inject from as long as the name matches. It doesn&#8217;t really matter that <code>own1</code> depends on <code>thirdParty1</code> and wants <code>hello</code> from <strong>exactly this module</strong> (as it, well&#8230; depends on it). Angular may as well give you the other <code>hello</code> - all in all names match so why not? There is more, your module may have completely no dependencies at all (literally <code>[]</code>) and you&#8217;ll be just fine injecting <code>hello</code> to this module&#8217;s components. Even more - application will run fine, but your tests may break because there is no <code>hello</code> defined. And the other way round: your tests may pass because in tests you selectively instantiate modules, but your production app may fail (because it&#8217;ll have the other module too). How weird is this?</p>
+
+<h2>What &#8220;module&#8221; means to me</h2>
+
+<p>I think of module as a box with tools inside. When I declare that I need given box (read: depend on it), it means I want a tool from <strong>exactly this box</strong>, not the other one that is around and happens to have similar tool inside (think: both have hammers inside but one has ball-pen hammer and the other one has framing hammer). What AngularJS does is: when you are about to do some construction work it takes all the tools from all the boxes you have around (doesn&#8217;t matter if you declare that you depend on them) throws them into one giant box and simply gives you one of these hammers (doesn&#8217;t matter which one, and doesn&#8217;t matter you asked for specific one by depending on specific box).</p>
+
+<p>We&#8217;re bitten by that today when part of our application suddenly stopped working even though there were no changes in that part of codebase. Namely we had <code>$modal</code> service from one library and in the other part we included dependency to <code>$modal</code> from different library (with different syntax). These two parts were completely unrelated and had almost nothing in common but it managed to broke the app. I know, two <code>$modal</code>s is not the best thing, in fact we are removing one of them, but anyway it just made the issue to pop up.</p>
+
+<h2>Summary</h2>
+
+<p>In AngularJS there is no such thing as module you depend on. Even when you ask for a thing, you cannot be sure you&#8217;ll get the one you expect just because you declare dependency on module that has exactly this thing. This is all one giant toolbox.</p>
+
+<p>I thought I understood what&#8217;s up with this modules system, why they invented their own one, but now I&#8217;m not sure. It helps in testing - fine, but my tests may pass while the app doesn&#8217;t work because I get different dependencies in both cases! To me depending on module means I want tools from <strong>exactly</strong> this module, not from the other one I&#8217;m even not interested in and I&#8217;m really surprised it&#8217;s not the case here.</p>
+
+<p>If it happens in code you fully control, it&#8217;s ok - you can rename stuff, but what if this is third party thing you can&#8217;t change? I asked this question on <a href="http://stackoverflow.com/questions/30374934/angularjs-module-dependencies-naming-clash">Stack Overflow</a> to double-check my understanding so you can take a look in case you want to read what others say. There is also live-example on <a href="http://jsbin.com/vapuye/3/edit?html,js,output">JSBin</a> so you can play with it.</p>
+</div>
+
+
+</article>
+
+
+        <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://mostr.github.com/blog/2015/05/21/angular-dependencies-naming-clash/" data-via="mostruszka" data-counturl="http://mostr.github.com/blog/2015/05/21/angular-dependencies-naming-clash/" >Tweet</a>
+  
+  
+  
+</div>
+
+
+
+
+<section id="comments">
+    <div id="disqus_thread"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+
+
+    			</div>
+    			<footer id="footer">
+    				<p class="credit">
+  Copyright &copy; 2015 - Michal Ostruszka. Powered by <a href="http://octopress.org">Octopress</a>
+</p>
+
+
+    			</footer>
+    			
+
+<script type="text/javascript">
+      var disqus_shortname = 'mostr';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mostr.github.com/blog/2015/05/21/angular-dependencies-naming-clash/';
+        var disqus_url = 'http://mostr.github.com/blog/2015/05/21/angular-dependencies-naming-clash/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+<link href='http://fonts.googleapis.com/css?family=Quattrocento+Sans|Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35173346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+
+
+    		</div>
+    	</section>
+  	</div>
+</body>
+</html>

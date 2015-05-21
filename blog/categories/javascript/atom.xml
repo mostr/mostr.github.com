@@ -4,7 +4,7 @@
   <title><![CDATA[Category: javascript | Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/blog/categories/javascript/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-04-22T18:38:30+02:00</updated>
+  <updated>2015-05-21T23:19:44+02:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -12,6 +12,93 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[This AngularJS modules/dependencies thing is a lie]]></title>
+    <link href="http://mostr.github.com/blog/2015/05/21/angular-dependencies-naming-clash/"/>
+    <updated>2015-05-21T21:52:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2015/05/21/angular-dependencies-naming-clash</id>
+    <content type="html"><![CDATA[<p>Bold statement in the title above, huh? Just stay with me, I'll try to make it clear in a minute. This is short story about AngularJS modules that define components and dependencies between these modules. Let's write some code first:</p>
+
+<p>``` javascript</p>
+
+<p>// third-party modules
+angular.module('thirdParty1', []).factory('hello', function () {
+  return 'hello world';
+});
+angular.module('thirdParty2', []).factory('hello', function () {
+  return 'hi there';
+});</p>
+
+<p>// "own" modules
+angular.module('own1', ['thirdParty1']).controller('Own1Ctrl', function(hello) {
+  this.greet = hello;
+});
+angular.module('own2', ['thirdParty2']).controller('Own2Ctrl', function(hello) {
+  this.greet = hello;
+});</p>
+
+<p>angular.module('app', ['own1', 'own2']);
+```</p>
+
+<p>And some view for that:</p>
+
+<p>
+``` html
+<body ng-app="app">
+  <div ng-controller="Own1Ctrl as own1"></p>
+
+<pre><code>OwnCtrl1: {{ own1.greet }}
+</code></pre>
+
+<p>  </div>
+  <div ng-controller="Own2Ctrl as own2"></p>
+
+<pre><code>OwnCtrl2: {{ own2.greet }}
+</code></pre>
+
+<p>  </div>
+</body>
+```
+</p>
+
+<p>This above is your application: you own (control) modules <code>own1</code> and <code>own2</code> and obviously the <code>app</code> one. There are also two other modules you depend on <code>thirdParty1</code> and <code>thirdParty2</code>. It happens that both third party modules define factories with the same name (but they both do different things). Your modules depend on these third party ones: <code>own1</code> depends on <code>thirdParty1</code> and <code>own2</code> depends on <code>thirdParty2</code>. Finally, your <code>app</code> depends on both of your modules. Simple. Now the fun part and question to you:</p>
+
+<h2>What do you think will be displayed?</h2>
+
+<p>Come on, this can't be hard. <code>Own1Ctrl</code> is defined in <code>own1</code> module that depends on <code>thirdParty1</code> which in turn defines <code>hello</code> factory as returning "hello world". Same with <code>Own2Ctrl</code>, depends on <code>thirdParty2</code> with "hi there". So I'd bet like this:</p>
+
+<p><code>
+OwnCtrl1: hello world
+OwnCtrl2: hi there
+</code></p>
+
+<p>If you are like me and the above looks pretty logical to you, you've just failed. The answer is</p>
+
+<p><code>
+OwnCtrl1: hi there
+OwnCtrl2: hi there
+</code></p>
+
+<h2>WAT?</h2>
+
+<p>It turns out AngularJS doesn't really care where it takes things to inject from as long as the name matches. It doesn't really matter that <code>own1</code> depends on <code>thirdParty1</code> and wants <code>hello</code> from <strong>exactly this module</strong> (as it, well... depends on it). Angular may as well give you the other <code>hello</code> - all in all names match so why not? There is more, your module may have completely no dependencies at all (literally <code>[]</code>) and you'll be just fine injecting <code>hello</code> to this module's components. Even more - application will run fine, but your tests may break because there is no <code>hello</code> defined. And the other way round: your tests may pass because in tests you selectively instantiate modules, but your production app may fail (because it'll have the other module too). How weird is this?</p>
+
+<h2>What "module" means to me</h2>
+
+<p>I think of module as a box with tools inside. When I declare that I need given box (read: depend on it), it means I want a tool from <strong>exactly this box</strong>, not the other one that is around and happens to have similar tool inside (think: both have hammers inside but one has ball-pen hammer and the other one has framing hammer). What AngularJS does is: when you are about to do some construction work it takes all the tools from all the boxes you have around (doesn't matter if you declare that you depend on them) throws them into one giant box and simply gives you one of these hammers (doesn't matter which one, and doesn't matter you asked for specific one by depending on specific box).</p>
+
+<p>We're bitten by that today when part of our application suddenly stopped working even though there were no changes in that part of codebase. Namely we had <code>$modal</code> service from one library and in the other part we included dependency to <code>$modal</code> from different library (with different syntax). These two parts were completely unrelated and had almost nothing in common but it managed to broke the app. I know, two <code>$modal</code>s is not the best thing, in fact we are removing one of them, but anyway it just made the issue to pop up.</p>
+
+<h2>Summary</h2>
+
+<p>In AngularJS there is no such thing as module you depend on. Even when you ask for a thing, you cannot be sure you'll get the one you expect just because you declare dependency on module that has exactly this thing. This is all one giant toolbox.</p>
+
+<p>I thought I understood what's up with this modules system, why they invented their own one, but now I'm not sure. It helps in testing - fine, but my tests may pass while the app doesn't work because I get different dependencies in both cases! To me depending on module means I want tools from <strong>exactly</strong> this module, not from the other one I'm even not interested in and I'm really surprised it's not the case here.</p>
+
+<p>If it happens in code you fully control, it's ok - you can rename stuff, but what if this is third party thing you can't change? I asked this question on <a href="http://stackoverflow.com/questions/30374934/angularjs-module-dependencies-naming-clash">Stack Overflow</a> to double-check my understanding so you can take a look in case you want to read what others say. There is also live-example on <a href="http://jsbin.com/vapuye/3/edit?html,js,output">JSBin</a> so you can play with it.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[You don't always need AngularJS DI in directives]]></title>
@@ -389,61 +476,6 @@ ddescribe('Your awesome feature' function() {</p>
 ```</p>
 
 <p>You can mark several specs/suites that way and all of them will be run exclusively. This behavior although not well documented is Jasmine feature and is independent on runner you use to run your tests. I personally use <a href="http://karma-runner.github.io">Karma</a> and it works like a charm.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Access and manipulate AngularJS $scope from browser's console]]></title>
-    <link href="http://mostr.github.com/blog/2013/09/24/angularjs-in-browsers-console/"/>
-    <updated>2013-09-24T12:28:00+02:00</updated>
-    <id>http://mostr.github.com/blog/2013/09/24/angularjs-in-browsers-console</id>
-    <content type="html"><![CDATA[<p>This one's gonna be quick. Have you ever wanted to trigger some action in your AngularJS application from browser's console? I mean, broadcast event (just for development/debug purposes), call functions on <code>$scope</code> or do other stuff? Let's see what we can do with it.</p>
-
-<p>Every AngularJS application is bound to exactly one DOM element e.g.</p>
-
-<p><code>html
-&lt;!DOCTYPE html&gt;
-&lt;html lang="en"&gt;
-&lt;head&gt;
-  // regular stuff here
-&lt;/head&gt;
-&lt;body ng-app="myApplication"&gt;
-  // AngularJS stuff here
-&lt;/body&gt;
-&lt;/html&gt;
-</code></p>
-
-<p>It also means that every single DOM element within <code>body</code> (in example above) is bound to some instance of <code>Scope</code>. And that's all we need - scope we can call functions on, change properties, access <code>$rootScope</code>, broadcast events etc. So let's grab this scope to play with it. AngularJS adds some extras to existing jQuery (if loaded) or provides its own jQLite with those extras built-in. One of those extra features is ability to get reference to scope bound to given DOM element. Try it:</p>
-
-<p>``` javascript
-// in browser's console
-$('body').scope();</p>
-
-<blockquote><blockquote><p>Scope {$id: "002", $$childTail: Child, $$childHead: Scope, $$prevSibling: null, …}
-```</p></blockquote></blockquote>
-
-<p>Whoaa! Looks like we got scope reference. From now on you can do whatever you need with this scope. Obviously you can grab any DOM element (within AngularJS application), target it with jQuery and get its scope to play with. If you don't have full blown jQuery loaded you can still do tricks as above but with using <code>angular.element</code> instead</p>
-
-<p>``` javascript
-var sidebar = document.getElementsById('sidebar');
-var scope = angular.element(sidebar).scope();</p>
-
-<blockquote><blockquote><p>Scope {$id: "00J", $$childTail: null, $$childHead: null, $$prevSibling: null, …}
-```</p></blockquote></blockquote>
-
-<p>One thing you need to remember about is if you want to fire an action on <code>$scope</code> from outside of AngularJS "world", you need to wrap your stuff in <code>$scope.$apply</code> to let AngularJS know about your changes. So just to recap, fire an event using <code>$rootScope</code> from console would look like below:</p>
-
-<p><code>javascript
-// in browser's console
-var sidebar = document.getElementsById('sidebar');
-var scope = angular.element(sidebar).scope();
-var rootScope = scope.$root;
-scope.$apply(function() {
-  rootScope.$broadcast('myEvent', {data: myData});
-});
-</code></p>
-
-<p>And you should now see your application reacting on this freshly baked event, raised from browser's console.</p>
 ]]></content>
   </entry>
   

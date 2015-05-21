@@ -4,7 +4,7 @@
   <title><![CDATA[Category: angularjs | Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/blog/categories/angularjs/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-04-22T18:38:30+02:00</updated>
+  <updated>2015-05-21T23:19:44+02:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -12,6 +12,93 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[This AngularJS modules/dependencies thing is a lie]]></title>
+    <link href="http://mostr.github.com/blog/2015/05/21/angular-dependencies-naming-clash/"/>
+    <updated>2015-05-21T21:52:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2015/05/21/angular-dependencies-naming-clash</id>
+    <content type="html"><![CDATA[<p>Bold statement in the title above, huh? Just stay with me, I'll try to make it clear in a minute. This is short story about AngularJS modules that define components and dependencies between these modules. Let's write some code first:</p>
+
+<p>``` javascript</p>
+
+<p>// third-party modules
+angular.module('thirdParty1', []).factory('hello', function () {
+  return 'hello world';
+});
+angular.module('thirdParty2', []).factory('hello', function () {
+  return 'hi there';
+});</p>
+
+<p>// "own" modules
+angular.module('own1', ['thirdParty1']).controller('Own1Ctrl', function(hello) {
+  this.greet = hello;
+});
+angular.module('own2', ['thirdParty2']).controller('Own2Ctrl', function(hello) {
+  this.greet = hello;
+});</p>
+
+<p>angular.module('app', ['own1', 'own2']);
+```</p>
+
+<p>And some view for that:</p>
+
+<p>
+``` html
+<body ng-app="app">
+  <div ng-controller="Own1Ctrl as own1"></p>
+
+<pre><code>OwnCtrl1: {{ own1.greet }}
+</code></pre>
+
+<p>  </div>
+  <div ng-controller="Own2Ctrl as own2"></p>
+
+<pre><code>OwnCtrl2: {{ own2.greet }}
+</code></pre>
+
+<p>  </div>
+</body>
+```
+</p>
+
+<p>This above is your application: you own (control) modules <code>own1</code> and <code>own2</code> and obviously the <code>app</code> one. There are also two other modules you depend on <code>thirdParty1</code> and <code>thirdParty2</code>. It happens that both third party modules define factories with the same name (but they both do different things). Your modules depend on these third party ones: <code>own1</code> depends on <code>thirdParty1</code> and <code>own2</code> depends on <code>thirdParty2</code>. Finally, your <code>app</code> depends on both of your modules. Simple. Now the fun part and question to you:</p>
+
+<h2>What do you think will be displayed?</h2>
+
+<p>Come on, this can't be hard. <code>Own1Ctrl</code> is defined in <code>own1</code> module that depends on <code>thirdParty1</code> which in turn defines <code>hello</code> factory as returning "hello world". Same with <code>Own2Ctrl</code>, depends on <code>thirdParty2</code> with "hi there". So I'd bet like this:</p>
+
+<p><code>
+OwnCtrl1: hello world
+OwnCtrl2: hi there
+</code></p>
+
+<p>If you are like me and the above looks pretty logical to you, you've just failed. The answer is</p>
+
+<p><code>
+OwnCtrl1: hi there
+OwnCtrl2: hi there
+</code></p>
+
+<h2>WAT?</h2>
+
+<p>It turns out AngularJS doesn't really care where it takes things to inject from as long as the name matches. It doesn't really matter that <code>own1</code> depends on <code>thirdParty1</code> and wants <code>hello</code> from <strong>exactly this module</strong> (as it, well... depends on it). Angular may as well give you the other <code>hello</code> - all in all names match so why not? There is more, your module may have completely no dependencies at all (literally <code>[]</code>) and you'll be just fine injecting <code>hello</code> to this module's components. Even more - application will run fine, but your tests may break because there is no <code>hello</code> defined. And the other way round: your tests may pass because in tests you selectively instantiate modules, but your production app may fail (because it'll have the other module too). How weird is this?</p>
+
+<h2>What "module" means to me</h2>
+
+<p>I think of module as a box with tools inside. When I declare that I need given box (read: depend on it), it means I want a tool from <strong>exactly this box</strong>, not the other one that is around and happens to have similar tool inside (think: both have hammers inside but one has ball-pen hammer and the other one has framing hammer). What AngularJS does is: when you are about to do some construction work it takes all the tools from all the boxes you have around (doesn't matter if you declare that you depend on them) throws them into one giant box and simply gives you one of these hammers (doesn't matter which one, and doesn't matter you asked for specific one by depending on specific box).</p>
+
+<p>We're bitten by that today when part of our application suddenly stopped working even though there were no changes in that part of codebase. Namely we had <code>$modal</code> service from one library and in the other part we included dependency to <code>$modal</code> from different library (with different syntax). These two parts were completely unrelated and had almost nothing in common but it managed to broke the app. I know, two <code>$modal</code>s is not the best thing, in fact we are removing one of them, but anyway it just made the issue to pop up.</p>
+
+<h2>Summary</h2>
+
+<p>In AngularJS there is no such thing as module you depend on. Even when you ask for a thing, you cannot be sure you'll get the one you expect just because you declare dependency on module that has exactly this thing. This is all one giant toolbox.</p>
+
+<p>I thought I understood what's up with this modules system, why they invented their own one, but now I'm not sure. It helps in testing - fine, but my tests may pass while the app doesn't work because I get different dependencies in both cases! To me depending on module means I want tools from <strong>exactly</strong> this module, not from the other one I'm even not interested in and I'm really surprised it's not the case here.</p>
+
+<p>If it happens in code you fully control, it's ok - you can rename stuff, but what if this is third party thing you can't change? I asked this question on <a href="http://stackoverflow.com/questions/30374934/angularjs-module-dependencies-naming-clash">Stack Overflow</a> to double-check my understanding so you can take a look in case you want to read what others say. There is also live-example on <a href="http://jsbin.com/vapuye/3/edit?html,js,output">JSBin</a> so you can play with it.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[You don't always need AngularJS DI in directives]]></title>
@@ -431,155 +518,6 @@ scope.$apply(function() {
 <p>Done. Now every HTTP request with <code>bypassErrorsInterceptor</code> property set will be passed through and the rest will result with event broadcasting.</p>
 
 <p>If you want to treat different HTTP error codes in different ways you can as well match responses by response code, send different events and display different messages to user - it's up to you, this can be also done in interceptors.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Preventing duplicated requests in AngularJS]]></title>
-    <link href="http://mostr.github.com/blog/2013/07/31/double-requests/"/>
-    <updated>2013-07-31T22:12:00+02:00</updated>
-    <id>http://mostr.github.com/blog/2013/07/31/double-requests</id>
-    <content type="html"><![CDATA[<p><em>Note: You can read the same post published on <a href="http://blog.codebrag.com/post/57412530001/preventing-duplicated-requests-in-angularjs">Codebrag blog</a>.</em></p>
-
-<p>You know the case when you hit submit button quickly enough that it sends the form twice? Or when you hit submit button and it seems that nothing happens, so you click it once again and another request is being fired? Duplicated requests issue - you can experience it in both traditional web application as well as in modern so-called Single Page Applications. I'd like to show you how it can be handled in AngularJS and how we did it in <a href="http://codebrag.com">Codebrag</a>.</p>
-
-<p>AngularJS itself has no built-in stuff for that. You can fire as many HTTP requests as you want and it is up to you and your application's code to handle it the way that would prevent double form submission. So let's see what weapons we are armed with to win this battle.</p>
-
-<h2>Disable button after submit</h2>
-
-<p>Suppose you want to prevent user to double-submit the same form. You can write pretty simple AngularJS directive to disable button when clicked. It will effectively block this button from being pressed again until e.g. response comes back. I personally don't really like this one, because you need to remember to put this directive on every form in you application. It looks like violating DRY a bit. So let's look for something better.</p>
-
-<h2>Asynchronous UI approach</h2>
-
-<p>This is not a solution to this particular problem per se but more an approach to building web applications. <a href="http://blog.alexmaccaw.com/asynchronous-ui">Alex McCaw</a> has great post about it which I highly recommend reading. Basically the trick is not to wait for server's response if it is not absolutely required. Simply act as if action was performed succesfully and immediately do what should be done on success. So let's take our form submit example. When user clicks submit button you fire HTTP request as usual and close form (possibly doing something more too, like adding comment to list) without waiting for response from server. It effectively prevents user from resubmitting form as it disappears immediately after button click. Obviously there are some drawbacks too and there are also use-cases (like payments etc) where this approach isn't recommended, but in most cases it will work fine. For more details I really recommend reading <a href="http://blog.alexmaccaw.com/asynchronous-ui">Alex's post</a>.</p>
-
-<h2>AngularJS-based solution</h2>
-
-<p>Ok but this approach above requires rethinking and possibly changing significant stuff in you application. What if you don't really want to do that? It turns out that solution for our initial problem can be quite easily implemented with tooling already available in AngularJS.</p>
-
-<p>What we need to do is to "intercept" <code>$http</code> service calls and decide if given request should be sent or not. Angular has concept of http interceptors but only for responses, not for requests (yet). But fear not, we'll use decorators. As official doc says</p>
-
-<blockquote><p>Decoration of service, allows the decorator to intercept the service instance creation. The returned instance may be the original instance, or a new instance which delegates to the original instance.</p></blockquote>
-
-<p>and that's exactly what we need. So this is how decorator can be applied:</p>
-
-<p>``` javascript decorator usage</p>
-
-<pre><code>angular.module('app').config(function($provide) {
-    $provide.decorator('$http', function($delegate, $q) {
-        return app.commons.uniqueRequestsAwareHttpService($delegate, $q);
-    });
-})
-</code></pre>
-
-<p>```</p>
-
-<p>I'll show you the details of implementation soon. Next issue to solve is how to determine when requests are identical and if one is already in progress? In the simplest form HTTP requests in AngularJS are done as below:</p>
-
-<p>``` javascript simple http call</p>
-
-<pre><code>var config = {method: 'POST', url: 'http://api.myapp.com/comment', data: {msg: 'foo bar'}};
-$http(config);
-</code></pre>
-
-<p>```</p>
-
-<p>All other methods like shortcut <code>get</code>, <code>post</code> as well as <code>$resource</code> use this form internally.
-It turns out we can freely add our own properties to this <code>config</code> object. They will help us identify requests. So we can for example modify the config above as follows:</p>
-
-<p>``` javascript modified config</p>
-
-<pre><code>var config = {
-    method: 'POST',
-    url: 'http://api.myapp.com/comment',
-    data: {msg: 'foo bar'},
-    unique: true,
-    requestId: create-comment'
-};
-</code></pre>
-
-<p>```</p>
-
-<p>This new config contains two new properties <code>unique</code> and <code>requestId</code>. The first one determines if for given types of requests we should check for duplicates or let all of them be sent (we probably can let all GET requests to go through without this check, and have e.g. POSTs checked). The second one, <code>requestId</code> is a property we'll match on when looking for duplicates. In this case it has constant value (create-comment) which means that only one POST request to <code>http://api.myapp.com/comment</code> should be pending at any time. This value can be dynamically calculated (e.g. using <code>data</code> for more fine-grained control).</p>
-
-<p>Ok, but how can we find out which requests are currently in progress? <code>$http</code> service has one neat property called <code>pendingRequests</code> which is array of <code>config</code> objects for request that were sent. So matching duplicated requests is just a matter of searching through <code>pendingRequests</code> for request with identical <code>requestId</code> as one in our request we are about to send. So here is first part of implementation:</p>
-
-<p>``` javascript first implementation of modified service</p>
-
-<pre><code>app.commons.uniqueRequestsAwareHttpService = function($http) {
-
-    var uniqueRequestOptionName = "unique";
-    var requestIdOptionName = 'requestId';
-
-    // should we care about duplicates check
-    function checkForDuplicates(requestConfig) {
-        return !!requestConfig[uniqueRequestOptionName];
-    }
-
-    // find identical request in pending requests
-    function checkIfDuplicated(requestConfig) {
-        var duplicated = $http.pendingRequests.filter(function(pendingReqConfig) {
-            return pendingReqConfig[requestIdOptionName] &amp;&amp; pendingReqConfig[requestIdOptionName] === requestConfig[requestIdOptionName];
-        });
-        return duplicated.length &gt; 0;
-    }
-
-    var modifiedHttpService = function(requestConfig) {
-        // if we need to check for dups and pending found - return
-        if(checkForDuplicates(requestConfig) &amp;&amp; checkIfDuplicated(requestConfig)) {
-            return;
-        }
-        // otherwise pass requeust to original $http service
-        return $http(requestConfig);
-    };
-
-    return modifiedHttpService;
-};
-</code></pre>
-
-<p>```</p>
-
-<p>It works fine if you try it, but has one huge drawback. <code>$http</code> service calls return promises so you can attach to them using <code>then</code> function and wait for them to be either resolved or rejected. Our current implementation is not consistent in return types. In fact it returns nothing when duplicate is detected, but returns regular promise when request is passed to original <code>$http</code>. To fix it we need to construct deferred using <code>$q</code> service as below.</p>
-
-<p>``` javascript returning promise</p>
-
-<pre><code>app.commons.uniqueRequestsAwareHttpService = function($http, $q) {
-
-    var DUPLICATED_REQUEST_STATUS_CODE = 499; // I just made it up - nothing special
-    var EMPTY_BODY = '';
-    var EMPTY_HEADERS = {};
-
-    // previous stuff here
-
-    function buildRejectedRequestPromise(requestConfig) {
-        var dfd = $q.defer();
-        // build response for duplicated request
-        var response = {data: EMPTY_BODY, headers: EMPTY_HEADERS, status: DUPLICATED_REQUEST_STATUS_CODE, config: requestConfig};
-        console.info('Such request is already in progres, rejecting this one with', response);
-        // reject promise with response above
-        dfd.reject(response);
-        return dfd.promise;
-    }
-
-    var modifiedHttpService = function(requestConfig) {
-        if(checkForDuplicates(requestConfig) &amp;&amp; checkIfDuplicated(requestConfig)) {
-            // return rejected promise with response consistent with those from $http calls
-            return buildRejectedRequestPromise(requestConfig);
-        }
-        return $http(requestConfig);
-    };
-
-    return modifiedHttpService;
-};
-</code></pre>
-
-<p>```</p>
-
-<p>Done, we have fully working implementation. Just one note, it works only for direct <code>$http</code> calls, if you try to fire <code>$http.get</code> or <code>$http.post</code> or even <code>$resource</code> it won't work, because those use shortcut calls defined directly on <code>$http</code>. Fix for that would be to define such functions on our modified version of <code>$http</code> service, but I'll leave it to you.</p>
-
-<p>And that's all. This is how we solved this in <a href="http://codebrag.com">Codebrag</a> without violating DRY (at least I think so). We have fully working decorator implementation that can prevent duplicated requests from sending. It can be configure separately for every <code>$http</code> request group you define in your application. Just add <code>unique</code> and <code>requestId</code> parameters to request config.</p>
-
-<p>I'm sure there are other methods for doing this kind of stuff. If you know one, let me know about it in comments below.</p>
 ]]></content>
   </entry>
   

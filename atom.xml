@@ -4,7 +4,7 @@
   <title><![CDATA[Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-04-22T18:38:30+02:00</updated>
+  <updated>2015-05-21T23:19:44+02:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -12,6 +12,113 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[This AngularJS modules/dependencies thing is a lie]]></title>
+    <link href="http://mostr.github.com/blog/2015/05/21/angular-dependencies-naming-clash/"/>
+    <updated>2015-05-21T21:52:00+02:00</updated>
+    <id>http://mostr.github.com/blog/2015/05/21/angular-dependencies-naming-clash</id>
+    <content type="html"><![CDATA[<p>Bold statement in the title above, huh? Just stay with me, I&#8217;ll try to make it clear in a minute. This is short story about AngularJS modules that define components and dependencies between these modules. Let&#8217;s write some code first:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// third-party modules</span>
+</span><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;thirdParty1&#39;</span><span class="p">,</span> <span class="p">[]).</span><span class="nx">factory</span><span class="p">(</span><span class="s1">&#39;hello&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="s1">&#39;hello world&#39;</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;thirdParty2&#39;</span><span class="p">,</span> <span class="p">[]).</span><span class="nx">factory</span><span class="p">(</span><span class="s1">&#39;hello&#39;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="s1">&#39;hi there&#39;</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// &quot;own&quot; modules</span>
+</span><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;own1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;thirdParty1&#39;</span><span class="p">]).</span><span class="nx">controller</span><span class="p">(</span><span class="s1">&#39;Own1Ctrl&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">hello</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">greet</span> <span class="o">=</span> <span class="nx">hello</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;own2&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;thirdParty2&#39;</span><span class="p">]).</span><span class="nx">controller</span><span class="p">(</span><span class="s1">&#39;Own2Ctrl&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">hello</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">greet</span> <span class="o">=</span> <span class="nx">hello</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">angular</span><span class="p">.</span><span class="nx">module</span><span class="p">(</span><span class="s1">&#39;app&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;own1&#39;</span><span class="p">,</span> <span class="s1">&#39;own2&#39;</span><span class="p">]);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And some view for that:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;body</span> <span class="na">ng-app=</span><span class="s">&quot;app&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">ng-controller=</span><span class="s">&quot;Own1Ctrl as own1&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    OwnCtrl1: {{ own1.greet }}
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">ng-controller=</span><span class="s">&quot;Own2Ctrl as own2&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    OwnCtrl2: {{ own2.greet }}
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/body&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This above is your application: you own (control) modules <code>own1</code> and <code>own2</code> and obviously the <code>app</code> one. There are also two other modules you depend on <code>thirdParty1</code> and <code>thirdParty2</code>. It happens that both third party modules define factories with the same name (but they both do different things). Your modules depend on these third party ones: <code>own1</code> depends on <code>thirdParty1</code> and <code>own2</code> depends on <code>thirdParty2</code>. Finally, your <code>app</code> depends on both of your modules. Simple. Now the fun part and question to you:</p>
+
+<h2>What do you think will be displayed?</h2>
+
+<p>Come on, this can&#8217;t be hard. <code>Own1Ctrl</code> is defined in <code>own1</code> module that depends on <code>thirdParty1</code> which in turn defines <code>hello</code> factory as returning &#8220;hello world&#8221;. Same with <code>Own2Ctrl</code>, depends on <code>thirdParty2</code> with &#8220;hi there&#8221;. So I&#8217;d bet like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>OwnCtrl1: hello world
+</span><span class='line'>OwnCtrl2: hi there
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you are like me and the above looks pretty logical to you, you&#8217;ve just failed. The answer is</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>OwnCtrl1: hi there
+</span><span class='line'>OwnCtrl2: hi there
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>WAT?</h2>
+
+<p>It turns out AngularJS doesn&#8217;t really care where it takes things to inject from as long as the name matches. It doesn&#8217;t really matter that <code>own1</code> depends on <code>thirdParty1</code> and wants <code>hello</code> from <strong>exactly this module</strong> (as it, well&#8230; depends on it). Angular may as well give you the other <code>hello</code> - all in all names match so why not? There is more, your module may have completely no dependencies at all (literally <code>[]</code>) and you&#8217;ll be just fine injecting <code>hello</code> to this module&#8217;s components. Even more - application will run fine, but your tests may break because there is no <code>hello</code> defined. And the other way round: your tests may pass because in tests you selectively instantiate modules, but your production app may fail (because it&#8217;ll have the other module too). How weird is this?</p>
+
+<h2>What &#8220;module&#8221; means to me</h2>
+
+<p>I think of module as a box with tools inside. When I declare that I need given box (read: depend on it), it means I want a tool from <strong>exactly this box</strong>, not the other one that is around and happens to have similar tool inside (think: both have hammers inside but one has ball-pen hammer and the other one has framing hammer). What AngularJS does is: when you are about to do some construction work it takes all the tools from all the boxes you have around (doesn&#8217;t matter if you declare that you depend on them) throws them into one giant box and simply gives you one of these hammers (doesn&#8217;t matter which one, and doesn&#8217;t matter you asked for specific one by depending on specific box).</p>
+
+<p>We&#8217;re bitten by that today when part of our application suddenly stopped working even though there were no changes in that part of codebase. Namely we had <code>$modal</code> service from one library and in the other part we included dependency to <code>$modal</code> from different library (with different syntax). These two parts were completely unrelated and had almost nothing in common but it managed to broke the app. I know, two <code>$modal</code>s is not the best thing, in fact we are removing one of them, but anyway it just made the issue to pop up.</p>
+
+<h2>Summary</h2>
+
+<p>In AngularJS there is no such thing as module you depend on. Even when you ask for a thing, you cannot be sure you&#8217;ll get the one you expect just because you declare dependency on module that has exactly this thing. This is all one giant toolbox.</p>
+
+<p>I thought I understood what&#8217;s up with this modules system, why they invented their own one, but now I&#8217;m not sure. It helps in testing - fine, but my tests may pass while the app doesn&#8217;t work because I get different dependencies in both cases! To me depending on module means I want tools from <strong>exactly</strong> this module, not from the other one I&#8217;m even not interested in and I&#8217;m really surprised it&#8217;s not the case here.</p>
+
+<p>If it happens in code you fully control, it&#8217;s ok - you can rename stuff, but what if this is third party thing you can&#8217;t change? I asked this question on <a href="http://stackoverflow.com/questions/30374934/angularjs-module-dependencies-naming-clash">Stack Overflow</a> to double-check my understanding so you can take a look in case you want to read what others say. There is also live-example on <a href="http://jsbin.com/vapuye/3/edit?html,js,output">JSBin</a> so you can play with it.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Scala case classes to and from tuples]]></title>
@@ -1965,34 +2072,6 @@ During a web service invocation, resteasy-cdi asks the CDI container for the man
 As a result, CDI services like injection, lifecycle management, events, decoration and interceptor bindings can be used in JAX-RS components.</p></blockquote>
 
 <p>This is a tiny trick that can save you from writing some boilerplate code. It is actually only one line, but shouldn&#8217;t we apply DRY where possible? Just remember, this is something extra from JBoss and is available only when using RESTEasy with CDI, and that&#8217;s why Glassfish can&#8217;t do that.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Running Arquillian tests with Maven dependencies in IntelliJ Idea]]></title>
-    <link href="http://mostr.github.com/blog/2012/10/24/arquillian-tests-with-maven-deps-intellij/"/>
-    <updated>2012-10-24T09:01:00+02:00</updated>
-    <id>http://mostr.github.com/blog/2012/10/24/arquillian-tests-with-maven-deps-intellij</id>
-    <content type="html"><![CDATA[<p>Arquillian is a big thing. For me it is a revolution in in-container testing. In real world scenarios it is quite common that your JEE components use some libraries, frameworks or other utility classes provided in thirdparty archives. When building project with maven you can make use of <code>pom.xml</code> descriptor and avoid giant amounts of boilerplate code (adding classes and packages of thirdparty libs by hand). I won&#8217;t dive into details how you can set it up, but the idea is to use <code>MavenDependencyResolver</code> and configure it to read your <code>pom.xml</code>.</p>
-
-<figure class='code'><figcaption><span>Using MavenDependencyResolver</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">MavenDependencyResolver</span> <span class="n">resolver</span> <span class="o">=</span> <span class="n">DependencyResolvers</span><span class="o">.</span><span class="na">use</span><span class="o">(</span><span class="n">MavenDependencyResolver</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
-</span><span class='line'><span class="n">resolver</span><span class="o">.</span><span class="na">loadMetadataFromPom</span><span class="o">(</span><span class="s">&quot;pom.xml&quot;</span><span class="o">);</span>
-</span><span class='line'><span class="o">...</span>
-</span><span class='line'><span class="c1">// use in ShrinkWrap archive</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This code above works well when run in Eclipse or in command-line Maven, but surprisingly may fail when run from IntelliJ Idea. It complains that <code>pom.xml</code> file cannot be found and read. Some time ago I switched my IDE from Eclipse to IntelliJ Idea and I&#8217;m still brand new if it comes to its cofiguration tips and tricks. Quick ShrinkWrap debugging session and it turnes out that IntelliJ invokes tests from <strong>project&#8217;s dir</strong> instead of <strong>module&#8217;s dir</strong>. Fortunately I&#8217;ve found a switch for that in IDE.</p>
-
-<h2>There I fixed it</h2>
-
-<p>Go to <strong>Edit Configurations</strong> (under <strong>Run</strong> menu), select <strong>Defaults</strong> branch and then <strong>JUnit</strong>. You can see that <strong>Working directory</strong> is set to project&#8217;s directory. That&#8217;s why <code>pom.xml</code> could not be found in this location. Fortunately it can be changed either to <code>MAVEN_REPOSITORY</code> or to <code>MODULE_DIR</code> and the latter is  exactly what you want. Changing that and saving it in defaults makes the issue above disappear.</p>
-
-<p>Now you can run your tests from IntelliJ even if you have maven dependencies to be included in your <code>@Deployment</code> archive.</p>
 ]]></content>
   </entry>
   
