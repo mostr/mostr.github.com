@@ -1,11 +1,11 @@
 ---
 layout: page
-title: Hi, how are you?
+title: Hi, how are you? Thanks for stopping by.
 sharing: false
 ---
 
-I'm Michał, full-stack developer in love with crafting things for web. I code all kinds of webapps from monolithic applications to modular SPAs today since beginning of my developer life. I work with Scala, Javascript (both client and server-side). Founder of Łódź meet.js meetings, active member of JUG Łódź, speaker at local meetups as well as developer conferences (Confitura, GeeCON, 4Developers i AgileByExample). I work fully-remote at [SoftwareMill](http://softwaremill.com")
+I'm Michal, full-stack developer in love with crafting things for web. I usually work with Scala and Javascript (both client and server-side). I'm founder of Lodz meet.js meetings and active member of JUG Lodz as well as speaker at local meetups and developer conferences (Confitura, GeeCON, 4Developers i AgileByExample). I'm also dad, amateur runner, guitar player and Chelsea FC supporter.
 
-## Have question, comment, or just want to say hello?
+I work fully-remote with awesome crew at [SoftwareMill](http://softwaremill.com").
 
-Feel free to contact me at [michal.ostruszka on gmail.com](mailto:michal.ostruszka@gmail.com).<br>You can also find me tweeting mostly about software dev on <a href="http://twitter.com/mostruszka">twitter</a>.
+Want to say hello? Reach me at [michal.ostruszka on gmail.com](mailto:michal.ostruszka@gmail.com). You can also find me tweeting mostly about software dev as <a href="http://twitter.com/mostruszka">@mostruszka</a>.
