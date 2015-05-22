@@ -72,13 +72,16 @@ I think of module as a box with tools inside. When I declare that I need given b
 
 We're bitten by that today when part of our application suddenly stopped working even though there were no changes in that part of codebase. Namely we had `$modal` service from one library and in the other part we included dependency to `$modal` from different library (with different syntax). These two parts were completely unrelated and had almost nothing in common but it managed to broke the app. I know, two `$modal`s is not the best thing, in fact we are removing one of them, but anyway it just made the issue to pop up.
 
+## What now?
+
+As far as I know there is no way to make it "right" (in my understanding, shown above). One thing you can do is to uniquely name your components, e.g. use `$com.example.modal` instead of just `$modal`. But it has one drawback, it forces you to use this so-called "extended" way of defining components (with explicit string dependencies array) as dots are not allowed in parameters' names. You can also use camelCase notation etc. Unfortunately it looks like most people care more about unique name of their __modules__ and forget about unique naming for __components__ (especially in libraries) maybe because they are not aware of this behavior. There is one more way suggested on [Stack Overflow](http://stackoverflow.com/questions/30374934/angularjs-module-dependencies-naming-clash/30376123#30376123) where I asked this question to double-check my understanding. This one uses `$injector` to cherry-pick correct components and create application-wide wrappers for them.
+
+
 ## Summary
 
 In AngularJS there is no such thing as module you depend on. Even when you ask for a thing, you cannot be sure you'll get the one you expect just because you declare dependency on module that has exactly this thing. This is all one giant toolbox. 
 
-I thought I understood what's up with this modules system, why they invented their own one, but now I'm not sure. It helps in testing - fine, but my tests may pass while the app doesn't work because I get different dependencies in both cases! To me depending on module means I want tools from __exactly__ this module, not from the other one I'm even not interested in and I'm really surprised it's not the case here.
-
-If it happens in code you fully control, it's ok - you can rename stuff, but what if this is third party thing you can't change? I asked this question on [Stack Overflow](http://stackoverflow.com/questions/30374934/angularjs-module-dependencies-naming-clash) to double-check my understanding so you can take a look in case you want to read what others say. There is also live-example on [JSBin](http://jsbin.com/vapuye/3/edit?html,js,output) so you can play with it.
+I thought I understood what's up with this modules system, why they invented their own one, but now I'm not sure. It helps in testing - fine, but my tests may pass while the app doesn't work because I get different dependencies in both cases! To me depending on module means I want tools from __exactly__ this module, not from the other one I'm even not interested in and I'm really surprised it's not the case here. If it happens in code you fully control, it's ok - you can rename stuff, but what if  In case you want to play with this example and see it live, here it is on [JSBin](http://jsbin.com/vapuye/3/edit?html,js,output).
 
 
 
