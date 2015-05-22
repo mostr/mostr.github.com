@@ -4,7 +4,7 @@
   <title><![CDATA[Category: angularjs | Hi there, I'm Michal]]></title>
   <link href="http://mostr.github.com/blog/categories/angularjs/atom.xml" rel="self"/>
   <link href="http://mostr.github.com/"/>
-  <updated>2015-05-21T23:19:44+02:00</updated>
+  <updated>2015-05-22T07:46:39+02:00</updated>
   <id>http://mostr.github.com/</id>
   <author>
     <name><![CDATA[Michal Ostruszka]]></name>
@@ -90,13 +90,15 @@ OwnCtrl2: hi there
 
 <p>We're bitten by that today when part of our application suddenly stopped working even though there were no changes in that part of codebase. Namely we had <code>$modal</code> service from one library and in the other part we included dependency to <code>$modal</code> from different library (with different syntax). These two parts were completely unrelated and had almost nothing in common but it managed to broke the app. I know, two <code>$modal</code>s is not the best thing, in fact we are removing one of them, but anyway it just made the issue to pop up.</p>
 
+<h2>What now?</h2>
+
+<p>As far as I know there is no way to make it "right" (in my understanding, shown above). One thing you can do is to uniquely name your components, e.g. use <code>$com.example.modal</code> instead of just <code>$modal</code>. But it has one drawback, it forces you to use this so-called "extended" way of defining components (with explicit string dependencies array) as dots are not allowed in parameters' names. You can also use camelCase notation etc. Unfortunately it looks like most people care more about unique name of their <strong>modules</strong> and forget about unique naming for <strong>components</strong> (especially in libraries) maybe because they are not aware of this behavior. There is one more way suggested on <a href="http://stackoverflow.com/questions/30374934/angularjs-module-dependencies-naming-clash/30376123#30376123">Stack Overflow</a> where I asked this question to double-check my understanding. This one uses <code>$injector</code> to cherry-pick correct components and create application-wide wrappers for them.</p>
+
 <h2>Summary</h2>
 
 <p>In AngularJS there is no such thing as module you depend on. Even when you ask for a thing, you cannot be sure you'll get the one you expect just because you declare dependency on module that has exactly this thing. This is all one giant toolbox.</p>
 
-<p>I thought I understood what's up with this modules system, why they invented their own one, but now I'm not sure. It helps in testing - fine, but my tests may pass while the app doesn't work because I get different dependencies in both cases! To me depending on module means I want tools from <strong>exactly</strong> this module, not from the other one I'm even not interested in and I'm really surprised it's not the case here.</p>
-
-<p>If it happens in code you fully control, it's ok - you can rename stuff, but what if this is third party thing you can't change? I asked this question on <a href="http://stackoverflow.com/questions/30374934/angularjs-module-dependencies-naming-clash">Stack Overflow</a> to double-check my understanding so you can take a look in case you want to read what others say. There is also live-example on <a href="http://jsbin.com/vapuye/3/edit?html,js,output">JSBin</a> so you can play with it.</p>
+<p>I thought I understood what's up with this modules system, why they invented their own one, but now I'm not sure. It helps in testing - fine, but my tests may pass while the app doesn't work because I get different dependencies in both cases! To me depending on module means I want tools from <strong>exactly</strong> this module, not from the other one I'm even not interested in and I'm really surprised it's not the case here. If it happens in code you fully control, it's ok - you can rename stuff, but what if  In case you want to play with this example and see it live, here it is on <a href="http://jsbin.com/vapuye/3/edit?html,js,output">JSBin</a>.</p>
 ]]></content>
   </entry>
   
